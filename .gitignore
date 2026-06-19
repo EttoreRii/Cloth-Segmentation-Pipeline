@@ -1,0 +1,70 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.env/
+.envrc
+.venv/
+ENV/
+env/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# Data and model weights
+data/
+datasets/
+models/
+checkpoints/
+weights/
+*.h5
+*.pt
+*.pth
+*.ckpt
+
+# Logs and temporary files
+logs/
+*.log
+tmp/
+temp/
+
+# IDE/editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Git files
+*.orig
+
+# Other generated files
+*.cache
+*.bak
+*.tmp
+*.swp
+*.swo
+
+
+
+/old
+/scratch
+/test_unity
+/sweater_segmentation
+/sweater_segmentation_best
+/scripts + immagini x train
+/dataset_yolo_lab
+/dataset_yolo_online
+/dataset_rgbd
+/dataset_yolo
+/relazione_visione.tex
+/debug_*
+/yolov8n-seg.pt
+

@@ -1,0 +1,7 @@
+torch
+transformers
+numpy
+opencv-python
+pillow
+matplotlib
+huggingface_hub

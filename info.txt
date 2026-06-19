@@ -1,0 +1,4 @@
+test_yolo_single --> output: maschere (parametro --image)
+yolo_inference --> output: coordinate 2D + visualizzazione 2D 
+verify_depth_extraction --> output: coordinate 3D + visualizzazione 3D
+verify_depth --> output: point cloud
