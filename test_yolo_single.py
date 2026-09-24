@@ -8,7 +8,7 @@ def main():
     parser.add_argument(
         "--image", 
         type=str, 
-        default=r"dataset_yolo/images/val/WIN_20251223_09_40_37_Pro.jpg",
+        default=r"dataset_rgbd_maglioncino/20260922_103620_946363_rgb.png",
         help="Path to the image file to test."
     )
     parser.add_argument(

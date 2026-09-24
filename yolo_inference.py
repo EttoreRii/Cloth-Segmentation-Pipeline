@@ -9,24 +9,26 @@ from ultralytics import YOLO
 def get_avg_y_per_x(mask, depth_img=None):
     """
     Computes the average Y-coordinate for each unique X-coordinate in the mask.
-    If depth_img is provided, extracts the Z-coordinate at the average (x, y) location.
+    If depth_img is provided, extracts the Z-coordinate as the median of all
+    valid depth samples in that column of the mask (robust to pixel-level noise).
+
     Returns:
         tuple: ({x: avg_y, ...}, {x: z, ...} or None)
     """
     points = cv2.findNonZero(mask)
     if points is None or len(points) == 0:
         return {}, None
-    
+
     points = points.squeeze()
     if points.ndim == 1:
         x, y = int(points[0]), int(points[1])
         z = float(depth_img[y, x]) if depth_img is not None else None
         return {x: float(y)}, ({x: z} if z is not None else None)
-    
-    # Dizionari per calcolare somme e conteggi
+
     y_sums = {}
     counts = {}
-    
+    z_values = {}
+
     for x, y in points:
         x_val = int(x)
         y_val = float(y)
@@ -36,20 +38,21 @@ def get_avg_y_per_x(mask, depth_img=None):
         else:
             y_sums[x_val] += y_val
             counts[x_val] += 1
-            
+
+        if depth_img is not None:
+            z_raw = float(depth_img[int(y), x_val])
+            if z_raw > 0:
+                z_values.setdefault(x_val, []).append(z_raw)
+
     avg_y_per_x = {x: y_sums[x] / counts[x] for x in y_sums}
-    
-    # Estrarre z dal punto (x, round(avg_y))
+
     z_per_x = None
     if depth_img is not None:
         z_per_x = {}
-        for x, avg_y in avg_y_per_x.items():
-            try:
-                z_per_x[x] = float(depth_img[int(round(avg_y)), x])
-            except IndexError:
-                # Caso limite se avg_y arrotondato esce dai bordi (improbabile con mask corretta)
-                z_per_x[x] = 0.0
-    
+        for x in avg_y_per_x:
+            vals = z_values.get(x, [])
+            z_per_x[x] = float(np.median(vals)) if vals else 0.0
+
     return avg_y_per_x, z_per_x
 
 def extract_start_end_points(mask, depth_img=None, num_points=10):
@@ -447,11 +450,11 @@ class SweaterDetector:
 
 if __name__ == "__main__":
     # Example Usage
-    detector = SweaterDetector("sweater_segmentation\\yolo_run\\weights\\best.pt")
+    detector = SweaterDetector("sweater_segmentation/yolo_run/weights/best.pt")
     
     # Test on an image
     #IMAGE_PATH = "dataset_rgbd_maglioncino\\20260109_153431_498491_rgb.png"
-    IMAGE_PATH = "dataset_rgbd_maglioncino\\20260604_115223_023566_rgb.png"
+    IMAGE_PATH = "dataset_rgbd_maglioncino/20260806_130310_267623_rgb.png"
 
     print(f"Processing image: {IMAGE_PATH}")
     coordinates, vis_img = detector.process_image(IMAGE_PATH, conf_threshold=0.25)

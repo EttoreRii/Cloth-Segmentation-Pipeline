@@ -6,9 +6,9 @@ from geometry_utils import visualize_coordinates_3d
 def main():
     # 1. Setup paths
     # Usiamo un'immagine dal dataset rgbd
-    RGB_PATH = "dataset_rgbd_maglioncino\\20260619_101605_163183_rgb.png"
-    DEPTH_PATH = "dataset_rgbd_maglioncino\\20260619_101605_163183_depth.png"
-    MODEL_PATH = "sweater_segmentation\\yolo_run\\weights\\best.pt"
+    RGB_PATH = "dataset_rgbd_maglioncino/20260922_105141_517711_rgb.png"
+    DEPTH_PATH = "dataset_rgbd_maglioncino/20260922_105141_517711_depth.png"
+    MODEL_PATH = "sweater_segmentation/yolo_run/weights/best.pt"
     OUTPUT_JSON = "robot_coordinates_3d.json"
 
     print(f"--- Inizio Verifica ---")
@@ -16,7 +16,7 @@ def main():
     print(f"Depth: {DEPTH_PATH}")
 
     # 2. Inizializza il detettore
-    detector = SweaterDetector(MODEL_PATH)
+    detector = SweaterDetector(MODEL_PATH, fx=908.8994750976562, fy=908.2923583984375, ppx=647.6917724609375, ppy=356.048095703125)
 
     # 3. Processa l'immagine con depth
     print("\nEsecuzione inferenza YOLO...")
