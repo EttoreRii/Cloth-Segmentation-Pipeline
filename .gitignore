@@ -20,11 +20,7 @@ data/
 datasets/
 models/
 checkpoints/
-weights/
-*.h5
-*.pt
-*.pth
-*.ckpt
+
 
 # Logs and temporary files
 logs/
