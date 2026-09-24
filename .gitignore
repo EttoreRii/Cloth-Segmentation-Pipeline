@@ -64,3 +64,4 @@ Thumbs.db
 /debug_*
 /yolov8n-seg.pt
 /dataset_rgbd_maglioncino
+/testing_best

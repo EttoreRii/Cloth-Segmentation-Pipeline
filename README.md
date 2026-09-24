@@ -1,4 +1,8 @@
-# Modulo di Visione Artificiale per la Manipolazione Robotica di Capi d'Abbigliamento
+# Integrazione di una Rete Neurale Artificiale e Controllo Robotico per il Taglio Automatico di Indumenti
+
+<p align="center">
+  <img src="risultati rete/header.jpg" alt="header_readme" width="100%">
+</p>
 
 Pipeline completa di visione artificiale e percezione 3D per l'identificazione, segmentazione e localizzazione spaziale delle parti salienti di capi d'abbigliamento flessibili (maglioncini: **colletto**, **polsini** e **bordo inferiore / fondomaglia**).
 
