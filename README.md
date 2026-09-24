@@ -331,5 +331,5 @@ Il modello è stato valutato sul validation set al termine delle 30 epoche di tr
 ---
 
 ## 👥 Autori e Riferimenti
-* Corso di **Dynamics and Control of Manipulators**
-* Sviluppato per la manipolazione robotica di materiali deformabili con telecamere RGB-D e sistemi manipolatori antropomorfi.
+* Corso di **Dynamics and Control of intelligent robots and vehicles**
+* Sviluppato da Eremita Gianluca e Ricci Ettore
