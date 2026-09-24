@@ -4,22 +4,30 @@ Pipeline completa di visione artificiale e percezione 3D per l'identificazione, 
 
 Il sistema integra **YOLOv8-seg Nano** per la segmentazione ad istanze in tempo reale, post-processing geometrico avanzato basato su *Y-averaging*, e fusione di dati **RGB-D** (da sensore **Intel RealSense D435i** o da simulatore **Unity**) per estrarre le coordinate tridimensionali $(X, Y, Z)$ calibrate per la manipolazione tramite braccio robotico (es. *Universal Robots UR5*).
 
+Include inoltre l'integrazione completa con **ROS 2** (package `coordinate_converter`) per pianificare ed eseguire le traiettorie di manipolazione sia all'interno del simulatore Unity che sul manipolatore industriale UR5 reale.
+
 ---
 
 ## 📌 Indice
 1. [Funzionalità e Architettura](#-funzionalità-e-architettura)
 2. [Struttura del Repository](#-struttura-del-repository)
-3. [Requisiti e Installazione](#-requisiti-e-installazione)
-4. [Guida all'Uso](#-guida-alluso)
+3. [Requisiti e Installazione Modulo Visione](#-requisiti-e-installazione-modulo-visione)
+4. [Guida all'Uso della Visione](#-guida-alluso-della-visione)
    - [1. Acquisizione Dati con RealSense](#1-acquisizione-dati-con-realsense-d435i)
    - [2. Preparazione Dataset e Addestramento](#2-preparazione-dataset-e-addestramento)
    - [3. Test Rapido su Singola Immagine](#3-test-rapido-su-singola-immagine)
    - [4. Inferenza Completa ed Estrazione Coordinate](#4-inferenza-completa-ed-estrazione-coordinate-2d3d)
    - [5. Verifica 3D con Point Cloud e Profondità](#5-verifica-3d-con-point-cloud-e-profondità)
    - [6. Inferenza con Dati Sintetici da Simulazione Unity](#6-inferenza-con-dati-sintetici-da-simulazione-unity)
-5. [Algoritmo Geometrico di Estrazione 3D](#-algoritmo-geometrico-di-estrazione-3d)
-6. [Formato dei Dati in Uscita](#-formato-dei-dati-in-uscita)
-7. [Valutazione delle Prestazioni](#-valutazione-delle-prestazioni)
+5. [Integrazione ROS 2 (`coordinate_converter`) per Unity e UR5 Reale](#-integrazione-ros-2-coordinate_converter-per-unity-e-ur5-reale)
+   - [A cosa servono i moduli ROS](#a-cosa-servono-i-moduli-ros)
+   - [Creazione del Package e Configurazione (Obbligatoria)](#creazione-del-package-e-configurazione-obbligatoria)
+   - [Utilizzo con la Simulazione Unity (ROS-TCP-Endpoint)](#utilizzo-con-la-simulazione-unity-ros-tcp-endpoint)
+   - [Utilizzo con il Manipolatore UR5 Reale](#utilizzo-con-il-manipolatore-ur5-reale)
+6. [Algoritmo Geometrico di Estrazione 3D](#-algoritmo-geometrico-di-estrazione-3d)
+7. [Formato dei Dati in Uscita](#-formato-dei-dati-in-uscita)
+8. [Valutazione delle Prestazioni](#-valutazione-delle-prestazioni)
+9. [Autori e Riferimenti](#-autori-e-riferimenti)
 
 ---
 
@@ -41,7 +49,7 @@ Il sistema è progettato per operare su piattaforme embedded ad alta efficienza 
 
 ## 📂 Struttura del Repository
 
-La codebase è organizzata in moduli dedicati alla pipeline di train/test, archiviazione dei risultati ed elaborazione dei dati:
+La codebase è organizzata in moduli dedicati alla pipeline di visione, train/test, integrazione robotica ROS 2 e dati:
 
 ```text
 Cloth-Segmentation-Pipeline/
@@ -76,15 +84,21 @@ Cloth-Segmentation-Pipeline/
 │       ├── results.png                 # Curve di loss e mAP per epoca
 │       └── BoxF1_curve.png, MaskF1...  # Curve di precisione, recall e F1
 │
-├── dataset_rgbd_maglioncino/           # Dataset RGB-D reale acquisito da RealSense D435i
-├── dataset_yolo/                       # Dataset segmentazione YOLO (images/ e labels/ per train e val)
-├── test_unity/                         # Immagini JPEG e buffer float32 di profondità (.bin) da Unity
-└── scripts + immagini x train/         # Script per conversione XML CVAT -> YOLO e split dataset
+├── ros/                                # Nodi ROS 2 per simulazione Unity e manipolatore UR5
+│   ├── setup.py                        # Entry points e configurazione del package coordinate_converter
+│   ├── unity/                          # Script ROS 2 per simulazione in Unity (topic /joint_targets)
+│   │   ├── home_joint_trajectory.py    # Movimento a configurazioni home/up con feedback in closed-loop
+│   │   └── spline_separata.py          # Controllo cinematico DLS e spline sui punti del maglioncino
+│   └── ur5/                            # Script ROS 2 per robot UR5 reale (Action FollowJointTrajectory)
+│       ├── home_joint_final.py         # Movimento a pose sicure/home/camera con profili trapezoidali
+│       └── spline_separata_finale.py   # Controllo cinematico DLS e invio spline al controllore UR5 reale
+│
+└── dataset_rgbd_maglioncino/           # Dataset RGB-D reale acquisito da RealSense D435i
 ```
 
 ---
 
-## 💻 Requisiti e Installazione
+## 💻 Requisiti e Installazione Modulo Visione
 
 ### 1. Prerequisiti di Sistema
 * **Sistema Operativo:** Windows 10/11, Ubuntu 20.04/22.04 LTS o NVIDIA JetPack (Jetson).
@@ -128,7 +142,7 @@ pip install -r requirements.txt
 
 ---
 
-## 🚀 Guida all'Uso
+## 🚀 Guida all'Uso della Visione
 
 Tutti gli script all'interno della cartella `codice train-test/` sono configurati per risolvere automaticamente i percorsi rispetto alla cartella principale del repository. È possibile eseguirli sia dalla root del progetto che dall'interno della cartella `codice train-test/`.
 
@@ -228,6 +242,125 @@ python "codice train-test/test_unity_inference.py"
 
 ---
 
+## 🤖 Integrazione ROS 2 (`coordinate_converter`) per Unity e UR5 Reale
+
+La cartella `ros/` contiene i nodi di controllo cinematico e di traiettoria sviluppati in **ROS 2** per connettere la percezione visiva alla manipolazione robotica. Permette di guidare sia il robot simulato in **Unity** sia il manipolatore **Universal Robots UR5 fisico**.
+
+### A cosa servono i moduli ROS
+
+1. **Simulazione in Unity (`ros/unity/`):**
+   * **`home_joint_trajectory.py`:** Pianificatore a feedback ad anello chiuso (*closed-loop*). Riceve lo stato da `/joint_states`, calcola il profilo di velocità ed invia i comandi al topic `/joint_targets` per portare il robot in posizioni sicure/predefinite (`home`, `up`).
+   * **`spline_separata.py`:** Controllore cinematico completo. Utilizza la cinematica diretta, lo Jacobiano geometrico con inversione a minimi quadrati smorzati (**DLS - Damped Least Squares**) e genera traiettorie a spline cartesiane attraverso i punti salienti del capo (7 fasi di movimento trapezie per stendere/manipolare il maglioncino).
+
+2. **Robot Reale UR5 (`ros/ur5/`):**
+   * **`home_joint_final.py`:** Si interfaccia al driver ufficiale dell'UR5 tramite l'Action ROS 2 `/scaled_joint_trajectory_controller/follow_joint_trajectory`. Muove il robot fisico tra configurazioni note (`home`, `up`, `camera`, `ortogonale`, `finale`) con profili di accelerazione trapezoidali.
+   * **`spline_separata_finale.py`:** Controllore cinematico per l'UR5 reale. Calcola l'inversa cinematica, gestisce l'orientamento dell'end-effector lungo le spline generate dalle coordinate del capo ed invia i comandi di traiettoria all'Action Server hardware.
+
+---
+
+### Creazione del Package e Configurazione (Obbligatoria)
+
+> [!IMPORTANT]
+> Per eseguire i nodi ROS 2, è necessario creare un apposito package in un workspace ROS 2. 
+> Il package **DEVE chiamarsi esattamente `coordinate_converter`** e deve essere creato con build-type **`typepython`** (`ament_python`). Inoltre, il file `setup.py` generato **DEVE essere sostituito con quello fornito nella cartella `ros/` del repository**.
+
+Seguire questi passaggi per configurare l'ambiente ROS 2:
+
+#### 1. Creare o aprire un Workspace ROS 2
+```bash
+mkdir -p ~/ros2_ws/src
+cd ~/ros2_ws/src
+```
+
+#### 2. Creare il package `coordinate_converter` (Python)
+```bash
+ros2 pkg create --build-type ament_python coordinate_converter
+```
+
+#### 3. Sostituire il file `setup.py`
+Sostituisci il file `setup.py` generato con quello contenuto nella cartella `ros/` di questo repository:
+```bash
+# Esempio copiando dal repository locale:
+cp /percorso/a/Cloth-Segmentation-Pipeline/ros/setup.py ~/ros2_ws/src/coordinate_converter/setup.py
+```
+
+#### 4. Copiare gli script Python nel package
+Copia gli script da eseguire nella cartella dei sorgenti del package (`~/ros2_ws/src/coordinate_converter/coordinate_converter/`):
+
+* **Se utilizzi la simulazione Unity:**
+  ```bash
+  cp /percorso/a/Cloth-Segmentation-Pipeline/ros/unity/home_joint_trajectory.py ~/ros2_ws/src/coordinate_converter/coordinate_converter/
+  cp /percorso/a/Cloth-Segmentation-Pipeline/ros/unity/spline_separata.py ~/ros2_ws/src/coordinate_converter/coordinate_converter/
+  ```
+
+* **Se utilizzi il robot reale UR5:**
+  ```bash
+  cp /percorso/a/Cloth-Segmentation-Pipeline/ros/ur5/home_joint_final.py ~/ros2_ws/src/coordinate_converter/coordinate_converter/
+  cp /percorso/a/Cloth-Segmentation-Pipeline/ros/ur5/spline_separata_finale.py ~/ros2_ws/src/coordinate_converter/coordinate_converter/
+  ```
+
+*(È possibile copiare tutti e quattro gli script per supportare indifferentemente entrambi gli ambienti).*
+
+#### 5. Compilare il package
+```bash
+cd ~/ros2_ws
+colcon build --packages-select coordinate_converter
+source install/setup.bash
+```
+
+---
+
+### Utilizzo con la Simulazione Unity (ROS-TCP-Endpoint)
+
+> [!WARNING]
+> Prima di lanciare qualsiasi nodo per Unity, **è indispensabile aprire il bridge ROS-TCP-Endpoint** per consentire lo scambio di messaggi di rete tra l'applicazione Unity e i nodi ROS 2.
+
+1. **Avviare il server ROS-TCP-Endpoint:**
+   ```bash
+   ros2 run ros_tcp_endpoint default_server_endpoint --ros-args -p ROS_IP:=0.0.0.0
+   ```
+
+2. **Avviare la scena Unity** premendo *Play* (verificare che l'indicatore di connessione al bridge ROS sia verde/connesso).
+
+3. **Portare il robot in posizione Home:**
+   In un nuovo terminale (con il workspace configurato tramite `source install/setup.bash`):
+   ```bash
+   ros2 run coordinate_converter home_joint_trajectory
+   ```
+
+4. **Avviare il controllo e la manipolazione su spline:**
+   ```bash
+   ros2 run coordinate_converter spline_separata
+   ```
+   Il robot eseguirà le spline cartesiane calcolate sulla base dei punti rilevati del maglioncino.
+
+---
+
+### Utilizzo con il Manipolatore UR5 Reale
+
+1. **Avviare il driver del robot UR5:**
+   Assicurati che il driver ROS 2 (`ur_robot_driver`) sia in esecuzione e connesso all'indirizzo IP del robot:
+   ```bash
+   ros2 launch ur_robot_driver ur5.launch.py robot_ip:=<ROBOT_IP> launch_rviz:=true
+   ```
+
+2. **Posizionare il robot in una configurazione sicura o in posa camera:**
+   ```bash
+   # Muove il robot alla configurazione 'home' di default
+   ros2 run coordinate_converter home_joint_final
+
+   # Oppure specificare una configurazione predefinita (es. 'camera', 'ortogonale', 'up', 'finale'):
+   ros2 run coordinate_converter home_joint_final camera
+   ```
+
+3. **Eseguire la traiettoria di manipolazione sul capo reale:**
+   ```bash
+   ros2 run coordinate_converter spline_separata_finale
+   ```
+   Il controllore calcolerà la cinematica inversa DLS in tempo reale inviando i waypoint interpolati allo `scaled_joint_trajectory_controller`.
+
+---
+
 ## 📐 Algoritmo Geometrico di Estrazione 3D
 
 Una volta ottenute le maschere binarie delle istanze rilevate da YOLOv8-seg, la pipeline esegue un raffinamento geometrico in 4 fasi:
@@ -239,7 +372,7 @@ graph TD
     C --> D[Y-Averaging Linea Media]
     D --> E[Campionamento Punti Salienti]
     E --> F[Proiezione 3D Intrinseci Telecamera]
-    F --> G[Esportazione JSON & NumPy per Robot UR5]
+    F --> G[Esportazione JSON & Nodi ROS 2 coordinate_converter]
 ```
 
 1. **Filtraggio Maschere (IoU Non-Maximum Suppression):** Se compaiono istanze multiple o frammentate per la stessa classe, viene mantenuta quella a confidenza maggiore eliminando le sovrapposizioni spurie.
@@ -299,7 +432,7 @@ Esempio di struttura generata da `robot_coordinates_3d.json`:
 }
 ```
 
-Inoltre, gli script stampano direttamente a terminale la definizione NumPy pronta per essere inclusa nel pianificatore di moto del braccio manipolatore:
+Inoltre, gli script stampano direttamente a terminale la definizione NumPy pronta per essere inclusa nel pianificatore di moto del braccio manipolatore nei nodi `coordinate_converter`:
 
 ```python
 # Polsino sinistro e destro interpolati
