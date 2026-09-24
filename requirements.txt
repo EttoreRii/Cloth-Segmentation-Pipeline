@@ -6,7 +6,5 @@ pillow
 matplotlib
 huggingface_hub
 pyrealsense2
-numpy
-yolo
 ultralytics
 open3d

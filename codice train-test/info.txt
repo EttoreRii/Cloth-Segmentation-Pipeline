@@ -1,4 +1,6 @@
-test_yolo_single --> output: maschere (parametro --image)
-yolo_inference --> output: coordinate 2D + visualizzazione 2D 
-verify_depth_extraction --> output: coordinate 3D + visualizzazione 3D
-verify_depth --> output: point cloud
+test_yolo_single.py       --> output: maschere segmentazione (salva in 'risultati rete/inference_result.jpg')
+yolo_inference.py         --> output: coordinate 2D/3D + visualizzazione 2D (salva in 'risultati rete/')
+verify_depth_extraction.py--> output: coordinate 3D + visualizzazione 3D point cloud (salva in 'risultati rete/')
+verifica_depth.py         --> output: point cloud RGB-D Open3D
+test_unity_inference.py   --> output: inferenza su dati sintetici/Unity (salva in 'risultati rete/')
+yolo_train.py             --> output: addestramento YOLOv8-seg ed esportazione ONNX (in 'risultati train-val/')

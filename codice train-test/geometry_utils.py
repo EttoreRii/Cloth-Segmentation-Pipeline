@@ -1,3 +1,4 @@
+import os
 import cv2
 import numpy as np
 
@@ -126,6 +127,10 @@ def visualize_coordinates_3d(rgb_path, depth_path, coordinates_json_path):
     pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intr)
 
     # 4. Load coordinates
+    if not os.path.exists(coordinates_json_path):
+        print(f"Error: Coordinates file not found at {coordinates_json_path}")
+        return
+
     with open(coordinates_json_path, 'r') as f:
         coords_data = json.load(f)
 

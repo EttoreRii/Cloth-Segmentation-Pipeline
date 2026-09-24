@@ -1,55 +1,323 @@
 # Modulo di Visione Artificiale per la Manipolazione Robotica di Capi d'Abbigliamento
 
-Questo repository contiene il codice e la documentazione del **Modulo di Visione Artificiale**, il cui obiettivo è identificare le parti salienti di un maglioncino (*colletto, polsini e bordo inferiore*) ed estrarne le coordinate spaziali 3D necessarie per la manipolazione tramite un robot (es. Universal Robots UR5).
+Pipeline completa di visione artificiale e percezione 3D per l'identificazione, segmentazione e localizzazione spaziale delle parti salienti di capi d'abbigliamento flessibili (maglioncini: **colletto**, **polsini** e **bordo inferiore / fondomaglia**).
 
-Il sistema integra un modello di segmentazione ad istanze real-time con un algoritmo di post-processing geometrico per la proiezione 3D dei punti di interesse a partire da dati RGB-D.
+Il sistema integra **YOLOv8-seg Nano** per la segmentazione ad istanze in tempo reale, post-processing geometrico avanzato basato su *Y-averaging*, e fusione di dati **RGB-D** (da sensore **Intel RealSense D435i** o da simulatore **Unity**) per estrarre le coordinate tridimensionali $(X, Y, Z)$ calibrate per la manipolazione tramite braccio robotico (es. *Universal Robots UR5*).
 
 ---
 
 ## 📌 Indice
-- [Dataset e Annotazione](#-dataset-e-annotazione)
-- [Architettura del Modello](#-architettura-del-modello)
-- [Valutazione delle Performance](#-valutazione-delle-performance)
-- [Algoritmo di Estrazione delle Coordinate 3D](#-algoritmo-di-estrazione-delle-coordinate-3d)
-- [Formato dei Dati in Uscita](#-formato-dei-dati-in-uscita)
+1. [Funzionalità e Architettura](#-funzionalità-e-architettura)
+2. [Struttura del Repository](#-struttura-del-repository)
+3. [Requisiti e Installazione](#-requisiti-e-installazione)
+4. [Guida all'Uso](#-guida-alluso)
+   - [1. Acquisizione Dati con RealSense](#1-acquisizione-dati-con-realsense-d435i)
+   - [2. Preparazione Dataset e Addestramento](#2-preparazione-dataset-e-addestramento)
+   - [3. Test Rapido su Singola Immagine](#3-test-rapido-su-singola-immagine)
+   - [4. Inferenza Completa ed Estrazione Coordinate](#4-inferenza-completa-ed-estrazione-coordinate-2d3d)
+   - [5. Verifica 3D con Point Cloud e Profondità](#5-verifica-3d-con-point-cloud-e-profondità)
+   - [6. Inferenza con Dati Sintetici da Simulazione Unity](#6-inferenza-con-dati-sintetici-da-simulazione-unity)
+5. [Algoritmo Geometrico di Estrazione 3D](#-algoritmo-geometrico-di-estrazione-3d)
+6. [Formato dei Dati in Uscita](#-formato-dei-dati-in-uscita)
+7. [Valutazione delle Prestazioni](#-valutazione-delle-prestazioni)
 
 ---
 
-## 📊 Dataset e Annotazione
+## 🧠 Funzionalità e Architettura
 
-Per l'addestramento del modello è stato creato un dataset ad hoc utilizzando immagini RGB e mappe di profondità acquisite tramite una telecamera **Intel RealSense D435i**. Il dataset comprende sia immagini scattate in un ambiente controllato di laboratorio, sia immagini provenienti da fonti online per aumentare la variabilità e la robustezza complessiva del modello.
+Il sistema è progettato per operare su piattaforme embedded ad alta efficienza computazionale (come **NVIDIA Jetson Orin Nano**) con vincoli di tempo reale.
 
-L'etichettatura delle immagini è stata effettuata manualmente con il software **CVAT (Computer Vision Annotation Tool)**, definendo i poligoni per tre classi di interesse:
-* 🧥 **Collar**: La linea del colletto del maglioncino.
-* 🧤 **Cuff**: I polsini delle maniche.
-* 🧵 **Hem**: Il bordo inferiore (fondomaglia).
-
-I poligoni di annotazione sono stati convertiti nel formato richiesto da **Ultralytics YOLOv8-seg** e il dataset finale è stato suddiviso in set di **Training (80%)** e **Validation (20%)**.
-
----
-
-## 🧠 Architettura del Modello
-
-Il cuore del sistema si basa su **YOLOv8-seg Nano (YOLOv8n-seg)**, la versione più leggera e veloce della famiglia Ultralytics dedicata alla segmentazione delle istanze.
-
-La scelta è motivata dalla necessità di operare in **tempo reale** su hardware embedded con risorse computazionali e di memoria limitate, come la **NVIDIA Jetson Orin Nano**. L'architettura YOLOv8n-seg garantisce un ottimo compromesso tra frame rate (FPS) e accuratezza (mAP).
-
-### Caratteristiche principali dell'architettura:
-* **Backbone:** Una versione ottimizzata di *CSPDarknet53* per l'efficace estrazione delle feature.
-* **Neck:** Utilizzo di *PANet (Path Aggregation Network)* per migliorare la fusione delle feature a diverse scale geometriche.
-* **Head:** *Decoupled Head* per la classificazione e la regressione dei bounding box, integrata con un ramo dedicato alla generazione delle maschere di segmentazione tramite prototipi.
-
-### Dettagli di Addestramento:
-* **Epoche:** 30
-* **Risoluzione di input:** 640x640 pixel
-* **Ottimizzatore:** SGD (Stochastic Gradient Descent)
-* **Funzione di Loss:** Combinazione di *box loss*, *class loss* e *mask loss*.
+### Punti Chiave del Modello
+* **Modello Base:** [YOLOv8n-seg](https://docs.ultralytics.com/tasks/segment/) (Ultralytics), ottimizzato per la segmentazione real-time.
+* **Classi Rilevate:**
+  * `0: Collar` — Linea del colletto.
+  * `1: Hem` — Bordo inferiore (fondomaglia).
+  * `2: Cuff` — Polsini delle maniche (distinzione automatica sinistro/destro).
+* **Backbone & Neck:** Versione modificata di CSPDarknet con PANet (Path Aggregation Network) per estrazione multi-scala delle feature.
+* **Filtri di Profondità:** Mappe RGB-D acquisite con filtraggio hardware/software RealSense (filtro spaziale, temporale, hole filling ed eliminazione automatica del piano di appoggio/outliers).
+* **Supporto Ambienti Reali e Virtuali:** Supporta input sia da telecamere fisiche RealSense che da stream sintetici generati nel simulatore Unity (RGB + buffer binari float32).
 
 ---
 
-## 📈 Valutazione delle Performance
+## 📂 Struttura del Repository
 
-I risultati ottenuti al termine dell'addestramento sul validation set sono riassunti nella tabella seguente:
+La codebase è organizzata in moduli dedicati alla pipeline di train/test, archiviazione dei risultati ed elaborazione dei dati:
+
+```text
+Cloth-Segmentation-Pipeline/
+├── acquisizione.py                     # Script di cattura RGB-D con Intel RealSense D435i
+├── data.yaml                           # Configurazione del dataset YOLO (classi e split)
+├── requirements.txt                    # Dipendenze Python
+├── yolov8n-seg.pt                      # Pesi pre-addestrati Nano di partenza
+│
+├── codice train-test/                  # Script principali di addestramento, inferenza e verifica
+│   ├── info.txt                        # Guida rapida ai file e agli output
+│   ├── geometry_utils.py               # Utilità geometriche e visualizzazione Open3D
+│   ├── yolo_train.py                   # Addestramento YOLO ed esportazione ONNX
+│   ├── test_yolo_single.py             # Test rapido di segmentazione su una singola immagine
+│   ├── yolo_inference.py               # Classe SweaterDetector ed estrazione coordinate 2D/3D
+│   ├── verify_depth_extraction.py      # Validazione coordinate 3D su nuvola di punti
+│   ├── verifica_depth.py               # Ispezione diretta point cloud RealSense
+│   └── test_unity_inference.py         # Test con telecamera virtuale e profondità Unity
+│
+├── risultati rete/                     # Destinazione automatica degli output di inferenza
+│   ├── inference_result.jpg            # Immagine con segmentazione plottata (test_yolo_single)
+│   ├── yolo_inference_result.jpg       # Risultato inferenza 2D con linee e punti campionati
+│   ├── inference_result_depth.jpg      # Risultato inferenza RGB-D con depth applicata
+│   ├── yolo_inference_unity_result.jpg # Risultato inferenza su immagini Unity
+│   ├── robot_coordinates.json          # Coordinate 2D estratte in formato JSON
+│   ├── robot_coordinates_3d.json       # Coordinate 3D (X, Y, Z in metri/mm)
+│   └── robot_coordinates_unity.json    # Coordinate 3D estratte dalla simulazione Unity
+│
+├── risultati train-val/                # Metriche, curve e pesi dell'addestramento
+│   └── yolo_run/
+│       ├── weights/                    # best.pt, best.onnx, last.pt
+│       ├── confusion_matrix.png        # Matrice di confusione
+│       ├── results.png                 # Curve di loss e mAP per epoca
+│       └── BoxF1_curve.png, MaskF1...  # Curve di precisione, recall e F1
+│
+├── dataset_rgbd_maglioncino/           # Dataset RGB-D reale acquisito da RealSense D435i
+├── dataset_yolo/                       # Dataset segmentazione YOLO (images/ e labels/ per train e val)
+├── test_unity/                         # Immagini JPEG e buffer float32 di profondità (.bin) da Unity
+└── scripts + immagini x train/         # Script per conversione XML CVAT -> YOLO e split dataset
+```
+
+---
+
+## 💻 Requisiti e Installazione
+
+### 1. Prerequisiti di Sistema
+* **Sistema Operativo:** Windows 10/11, Ubuntu 20.04/22.04 LTS o NVIDIA JetPack (Jetson).
+* **Python:** versione `3.8` o superiore (consigliato Python `3.10`).
+* **GPU (Consigliata):** Scheda grafica NVIDIA con supporto CUDA (per addestramento e inferenza rapida), oppure esecuzione su CPU.
+
+### 2. Clonazione del Repository
+```bash
+git clone https://github.com/EttoreRii/Cloth-Segmentation-Pipeline.git
+cd Cloth-Segmentation-Pipeline
+```
+
+### 3. Creazione dell'Ambiente Virtuale
+È consigliato creare un ambiente virtuale isolato per evitare conflitti tra dipendenze:
+
+**Su Windows (PowerShell):**
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+**Su Linux / macOS:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 4. Installazione delle Dipendenze
+Installa i pacchetti necessari tramite `pip`:
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+> [!NOTE]
+> Se desideri sfruttare l'accelerazione CUDA con PyTorch, installa la build con supporto CUDA dal sito ufficiale di [PyTorch](https://pytorch.org/get-started/locally/) prima o dopo `requirements.txt`:
+> ```bash
+> pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+> ```
+
+---
+
+## 🚀 Guida all'Uso
+
+Tutti gli script all'interno della cartella `codice train-test/` sono configurati per risolvere automaticamente i percorsi rispetto alla cartella principale del repository. È possibile eseguirli sia dalla root del progetto che dall'interno della cartella `codice train-test/`.
+
+### 1. Acquisizione Dati con RealSense D435i
+Per acquisire nuove coppie di immagini RGB e mappe di profondità sincronizzate e filtrate:
+1. Connetti la telecamera **Intel RealSense D435i** tramite cavo USB 3.0.
+2. Esegui:
+   ```bash
+   python acquisizione.py
+   ```
+3. Lo script applica filtri spaziali, temporali e di riempimento buchi (*hole-filling*), calcola la mediana su 15 frame per eliminare il rumore e salva i file in `dataset_rgbd_maglioncino/<timestamp>_rgb.png` e `<timestamp>_depth.png`.
+
+---
+
+### 2. Preparazione Dataset e Addestramento
+
+Se hai etichettato nuove immagini con CVAT (in formato polilinee/poligoni XML):
+1. Converti le annotazioni nel formato compatibile con YOLOv8-seg:
+   ```bash
+   python "scripts + immagini x train/convert_xml_to_yolo.py"
+   ```
+2. Suddividi i campioni in set di Training (80%) e Validation (20%):
+   ```bash
+   python "scripts + immagini x train/organize_dataset.py"
+   ```
+3. Avvia l'addestramento della rete YOLOv8n-seg:
+   ```bash
+   python "codice train-test/yolo_train.py"
+   ```
+   * I pesi addestrati e le metriche di validazione verranno salvati in `risultati train-val/yolo_run/weights/best.pt`.
+   * Al termine del training, il modello viene automaticamente esportato in formato ONNX (`best.onnx`) per massima portabilità.
+
+---
+
+### 3. Test Rapido su Singola Immagine
+Per testare la segmentazione su una singola immagine e visualizzare le maschere rilevate:
+
+```bash
+# Esecuzione standard con parametri di default
+python "codice train-test/test_yolo_single.py"
+
+# Esecuzione specificando un'immagine custom e soglia di confidenza
+python "codice train-test/test_yolo_single.py" --image "dataset_rgbd_maglioncino/20260109_153431_498491_rgb.png" --conf 0.3
+```
+* **Output salvato:** `risultati rete/inference_result.jpg`.
+
+---
+
+### 4. Inferenza Completa ed Estrazione Coordinate (2D/3D)
+Per eseguire la pipeline di post-processing geometrico con estrazione dei punti di grasping per il robot:
+
+```bash
+python "codice train-test/yolo_inference.py"
+```
+* **Cosa fa:**
+  * Esegue la segmentazione di colletto, polsini e fondomaglia.
+  * Filtra maschere sovrapposte tramite IoU.
+  * Calcola lo scheletro della cucitura (*Y-averaging*) ed estrae i punti campionati.
+  * Salva la visualizzazione grafica con punti e linee in `risultati rete/yolo_inference_result.jpg`.
+  * Serializza le coordinate estratte in `risultati rete/robot_coordinates.json`.
+
+---
+
+### 5. Verifica 3D con Point Cloud e Profondità
+Per combinare le immagini a colori con la mappa di profondità reale, convertire i punti in coordinate metriche $(X, Y, Z)$ e aprire una finestra interattiva 3D con Open3D:
+
+```bash
+python "codice train-test/verify_depth_extraction.py"
+```
+* **Cosa fa:**
+  * Associa a ciascun punto 2D la profondità reale della RealSense filtrando gli outlier del piano di lavoro.
+  * Calcola le coordinate 3D tramite i parametri intrinseci della telecamera.
+  * Genera e visualizza la point cloud 3D con sfere colorate posizionate sui punti di presa:
+    * 🟡 **Giallo:** Colletto (*Collar*)
+    * 🟢 **Verde:** Polsini (*Cuff*)
+    * 🟣 **Magenta:** Bordo inferiore (*Hem*)
+  * Stampa a console le matrici già formattate in formato NumPy, pronte per essere incollate nel controllore del robot.
+  * Salva i risultati in `risultati rete/robot_coordinates_3d.json` e `risultati rete/inference_result_depth.jpg`.
+
+Per ispezionare esclusivamente la point cloud RGB-D grezza acquisita:
+```bash
+python "codice train-test/verifica_depth.py"
+```
+
+---
+
+### 6. Inferenza con Dati Sintetici da Simulazione Unity
+Per validare il sistema in ambiente simulato (es. Unity) con telecamera virtuale zenitale:
+
+```bash
+python "codice train-test/test_unity_inference.py"
+```
+* **Cosa fa:**
+  * Carica la texture RGB e il buffer float32 di profondità (`.bin`) generato dal simulatore.
+  * Applica gli intrinseci della telecamera virtuale Unity (FOV 60° verticale).
+  * Salva l'immagine risultante in `risultati rete/yolo_inference_unity_result.jpg` e le coordinate in `risultati rete/robot_coordinates_unity.json`.
+
+---
+
+## 📐 Algoritmo Geometrico di Estrazione 3D
+
+Una volta ottenute le maschere binarie delle istanze rilevate da YOLOv8-seg, la pipeline esegue un raffinamento geometrico in 4 fasi:
+
+```mermaid
+graph TD
+    A[Immagine RGB + Depth] --> B[Inferenza YOLOv8-seg]
+    B --> C[Filtraggio Maschere IoU]
+    C --> D[Y-Averaging Linea Media]
+    D --> E[Campionamento Punti Salienti]
+    E --> F[Proiezione 3D Intrinseci Telecamera]
+    F --> G[Esportazione JSON & NumPy per Robot UR5]
+```
+
+1. **Filtraggio Maschere (IoU Non-Maximum Suppression):** Se compaiono istanze multiple o frammentate per la stessa classe, viene mantenuta quella a confidenza maggiore eliminando le sovrapposizioni spurie.
+2. **Y-Averaging (Estrazione Scheletro Medio):** Per ogni coordinata $x$ appartenente alla maschera, viene calcolato il valor medio delle ordinate $y$:
+   $$\bar{y}(x) = \frac{1}{N_x} \sum_{i=1}^{N_x} y_i$$
+   Questo permette di isolare la linea centrale della cucitura eliminando le variazioni dovute allo spessore del tessuto o a pieghe superficiali.
+3. **Campionamento Geometrico Adattivo:**
+   * **Collar & Hem:** Vengono estratti $N$ punti equidistanti per approssimare fedelmente la curvatura.
+   * **Cuff:** Vengono estratti il punto iniziale e finale di ciascun polsino, ordinati lungo l'asse $X$ per separare automaticamente il polsino sinistro (`polsino_sx`) da quello destro (`polsino_dx`).
+4. **Proiezione Pinhole 3D:** Conoscendo la matrice degli intrinseci della telecamera ($f_x, f_y, c_x, c_y$) e il valore di profondità $Z$ (espresso in metri), ciascun punto $(x_{pix}, y_{pix})$ viene retroproiettato nello spazio tridimensionale:
+   $$X = \frac{(x_{pix} - c_x) \cdot Z}{f_x}, \quad Y = \frac{(y_{pix} - c_y) \cdot Z}{f_y}$$
+
+---
+
+## 💾 Formato dei Dati in Uscita
+
+Le coordinate 3D finali vengono salvate in file **JSON** all'interno della cartella `risultati rete/`.
+
+Esempio di struttura generata da `robot_coordinates_3d.json`:
+
+```json
+{
+    "Cuff": [
+        {
+            "start": [-0.158, 0.082, 0.725],
+            "end": [-0.121, 0.086, 0.724]
+        },
+        {
+            "start": [0.124, 0.085, 0.723],
+            "end": [0.162, 0.081, 0.724]
+        }
+    ],
+    "Hem": [
+        {
+            "points": [
+                [-0.095, -0.152, 0.730],
+                [-0.047, -0.150, 0.731],
+                [0.002, -0.149, 0.730],
+                [0.051, -0.151, 0.729],
+                [0.098, -0.153, 0.730]
+            ]
+        }
+    ],
+    "Collar": [
+        {
+            "left": [-0.042, 0.141, 0.720],
+            "right": [0.043, 0.140, 0.721],
+            "curve_points": [
+                [-0.042, 0.141, 0.720],
+                [-0.021, 0.115, 0.721],
+                [0.001, 0.108, 0.722],
+                [0.022, 0.116, 0.721],
+                [0.043, 0.140, 0.721]
+            ]
+        }
+    ]
+}
+```
+
+Inoltre, gli script stampano direttamente a terminale la definizione NumPy pronta per essere inclusa nel pianificatore di moto del braccio manipolatore:
+
+```python
+# Polsino sinistro e destro interpolati
+polsino_sx_raw = self.rete_to_base(np.array([[-0.158, 0.082, 0.725], [-0.121, 0.086, 0.724]]))
+self.polsino_sx_fitto = self.prendi_punti_intermedi(polsino_sx_raw[0], polsino_sx_raw[1])
+
+# Fondo maglia
+self.fondo_maglia = self.rete_to_base(np.array([...]))
+
+# Colletto
+self.colletto = self.rete_to_base(np.array([...]))
+```
+
+---
+
+## 📊 Valutazione delle Prestazioni
+
+Il modello è stato valutato sul validation set al termine delle 30 epoche di training:
 
 | Metrica | Precision | Recall | mAP@50 |
 | :--- | :---: | :---: | :---: |
@@ -57,43 +325,11 @@ I risultati ottenuti al termine dell'addestramento sul validation set sono riass
 | **Mask (Segmentation)** | 65.4% | 60.7% | **56.8%** |
 
 ### Analisi dei Risultati
-L'elevato valore di **mAP@50 per i box (90.3%)** indica un'ottima capacità del modello di localizzare correttamente le macro-zone di interesse. La metrica **mAP@50 per le maschere (56.8%)** risulta inferiore a causa della complessità intrinseca della segmentazione di elementi flessibili e sottili (come cuciture e bordi dell'abbigliamento), ma si dimostra comunque ampiamente adeguata per l'estrazione della linea media necessaria alla successiva manipolazione robotica.
+* **Localizzazione Robusta:** L'elevato valore di **mAP@50 per i box (90.3%)** assicura un rilevamento affidabile delle parti anche in presenza di rotazioni o deformazioni del capo.
+* **Segmentazione Ottimale per il Grasping:** Sebbene la complessità dei tessuti morbidi porti a un mAP@50 delle maschere del 56.8%, l'algoritmo di **Y-averaging** estrae fedelmente la mezzeria e compensa eventuali imperfezioni sui bordi del tessuto, fornendo traiettorie di grasping stabili e ripetibili per il robot.
 
 ---
 
-## 📐 Algoritmo di Estrazione delle Coordinate 3D
-
-Una volta ottenute le maschere binarie dalle predizioni di YOLOv8-seg, viene applicata una pipeline di post-processing geometrico strutturata in 4 passaggi:
-
-1. **Filtraggio delle Maschere:** Se vengono rilevate più istanze della stessa classe, viene mantenuta solo quella con il punteggio di confidenza più elevato. Viene inoltre applicato un filtraggio basato su *Intersection over Union (IoU)* per eliminare sovrapposizioni spurie.
-2. **Y-Averaging (Linea Media):** Per ogni coordinata $x$ lungo la maschera, viene calcolata la media dei valori $y$ dei pixel appartenenti alla maschera. Questo permette di individuare lo "scheletro" o la linea centrale dell'elemento (es. il centro della curva del colletto), ignorando lo spessore del bordo o del tessuto.
-3. **Campionamento dei Punti:**
-   * **Collar & Hem:** Vengono estratti $N$ punti equidistanti lungo l'asse $x$ per mappare accuratamente la curvatura della cucitura.
-   * **Cuff:** Vengono estratti unicamente i punti estremi (inizio e fine) per definire l'orientamento vettoriale e la larghezza del polsino.
-4. **Proiezione 3D:** Per ogni punto $(x, y)$ 2D campionato dall'immagine RGB, viene recuperato il rispettivo valore di profondità $z$ dal frame *depth* allineato della RealSense. Sfruttando i parametri intrinseci della telecamera (focal length e optical center), le coordinate pixel vengono trasformate in coordinate tridimensionali $(X, Y, Z)$ espresse nel sistema di riferimento della telecamera e, tramite matrice di calibrazione *eye-in-hand*, in quello della base del robot.
-
----
-
-## 💾 Formato dei Dati in Uscita
-
-Le coordinate 3D finali vengono serializzate e salvate in un file in formato **JSON**, rendendole immediatamente leggibili da parte del modulo di pianificazione delle traiettorie del robot.
-
-Ogni elemento contiene l'elenco dei punti espressi in metri:
-
-```json
-{
-  "timestamp": 1718812345.67,
-  "features": {
-    "collar": [
-      {"x": 0.123, "y": 0.456, "z": 0.789},
-      {"x": 0.145, "y": 0.462, "z": 0.785}
-    ],
-    "cuff_left": [
-      {"x": -0.210, "y": 0.350, "z": 0.810},
-      {"x": -0.180, "y": 0.340, "z": 0.805}
-    ],
-    "hem": [
-      {"x": -0.050, "y": 0.600, "z": 0.750}
-    ]
-  }
-}
+## 👥 Autori e Riferimenti
+* Corso di **Dynamics and Control of Manipulators**
+* Sviluppato per la manipolazione robotica di materiali deformabili con telecamere RGB-D e sistemi manipolatori antropomorfi.

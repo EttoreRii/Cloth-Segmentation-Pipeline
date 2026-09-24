@@ -1,0 +1,10 @@
+# Dataset configuration for Cloth / Sweater Segmentation
+path: dataset_yolo  # dataset root dir (relative to data.yaml or project root)
+train: images/train  # train images (relative to 'path') 
+val: images/val  # val images (relative to 'path')
+
+# Classes
+names:
+  0: Collar
+  1: Hem
+  2: Cuff

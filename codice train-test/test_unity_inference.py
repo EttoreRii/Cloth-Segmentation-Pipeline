@@ -1,12 +1,17 @@
 import cv2
 import os
-from yolo_inference import SweaterDetector
+from yolo_inference import SweaterDetector, resolve_model_path, PROJECT_ROOT
 
 def test_unity():
     # Paths
-    MODEL_PATH = "sweater_segmentation\\yolo_run\\weights\\best.pt"
-    RGB_PATH = "test_unity/maglioncino_bianco.jpeg"
-    DEPTH_BIN_PATH = "test_unity/maglioncino_camera_depth6.bin"
+    MODEL_PATH = resolve_model_path()
+    RGB_PATH = os.path.join(PROJECT_ROOT, "test_unity", "maglioncino_bianco.jpeg")
+    DEPTH_BIN_PATH = os.path.join(PROJECT_ROOT, "test_unity", "maglioncino_camera_depth6.bin")
+    RESULTS_DIR = os.path.join(PROJECT_ROOT, "risultati rete")
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    
+    OUTPUT_JSON = os.path.join(RESULTS_DIR, "robot_coordinates_unity.json")
+    OUTPUT_IMG = os.path.join(RESULTS_DIR, "yolo_inference_unity_result.jpg")
     
     print("--- Unity Inference Test ---")
     print(f"RGB: {RGB_PATH}")
@@ -24,11 +29,11 @@ def test_unity():
     
     # 3. Save results
     if coordinates:
-        detector.save_coordinates_json(coordinates, "robot_coordinates_unity.json")
-        cv2.imwrite("yolo_inference_unity_result.jpg", vis_img)
+        detector.save_coordinates_json(coordinates, OUTPUT_JSON)
+        cv2.imwrite(OUTPUT_IMG, vis_img)
         print("\nSuccess!")
-        print("Visualization saved to yolo_inference_unity_result.jpg")
-        print("Coordinates saved to robot_coordinates_unity.json")
+        print(f"Visualization saved to {OUTPUT_IMG}")
+        print(f"Coordinates saved to {OUTPUT_JSON}")
         
         # Print NumPy array format for copy-pasting
         print("\n--- Processed Coordinates (NumPy Format) ---\n")

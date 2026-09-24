@@ -1,11 +1,18 @@
+import os
 import cv2
 import numpy as np
 import open3d as o3d
 import pyrealsense2 as rs
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+
 # Carica immagini salvate
-color = cv2.imread("dataset_rgbd_maglioncino\\20260109_153911_938455_rgb.png")
-depth = cv2.imread("dataset_rgbd_maglioncino\\20260109_153911_938455_depth.png", cv2.IMREAD_UNCHANGED)
+rgb_path = os.path.join(PROJECT_ROOT, "dataset_rgbd_maglioncino", "20260109_153911_938455_rgb.png")
+depth_path = os.path.join(PROJECT_ROOT, "dataset_rgbd_maglioncino", "20260109_153911_938455_depth.png")
+
+color = cv2.imread(rgb_path)
+depth = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
 
 print("Tipo dati:", depth.dtype)
 print("Dimensioni:", depth.shape)

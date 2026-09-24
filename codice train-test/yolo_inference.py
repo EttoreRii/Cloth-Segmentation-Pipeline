@@ -1,7 +1,28 @@
 import cv2
 import numpy as np
 import json
+import os
 from ultralytics import YOLO
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+
+def resolve_model_path(model_path=None):
+    if model_path and os.path.exists(model_path):
+        return model_path
+    if model_path:
+        cand = os.path.join(PROJECT_ROOT, model_path)
+        if os.path.exists(cand):
+            return cand
+    candidates = [
+        os.path.join(PROJECT_ROOT, "risultati train-val", "yolo_run", "weights", "best.pt"),
+        os.path.join(PROJECT_ROOT, "sweater_segmentation_best", "yolo_run", "weights", "best.pt"),
+        os.path.join(PROJECT_ROOT, "yolov8n-seg.pt"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return candidates[0]
 
 # ==========================================
 # 1. COORDINATE EXTRACTION LOGIC
@@ -218,13 +239,14 @@ def filter_overlapping_masks(masks, classes, scores, iou_threshold=0.5):
 # 3. INFERENCE CLASS
 # ==========================================
 class SweaterDetector:
-    def __init__(self, model_path="sweater_segmentation\\yolo_run\\weights\\best.pt", 
+    def __init__(self, model_path=None, 
                  fx=605.93298, fy=605.52826, ppx=325.12787, ppy=237.36540,
                  near=0.3, far=1000.0):
         # Default intrinsics for Intel RealSense D435i Color Stream at 640x480 (calibrated):
         #   fx = 605.93298
         #   fy = 605.52826
         # Load the YOLO model
+        model_path = resolve_model_path(model_path)
         print(f"Loading YOLO model from {model_path}...")
         self.model = YOLO(model_path)
         # Camera Intrinsics
@@ -435,7 +457,7 @@ class SweaterDetector:
             
         return spatial_inst
     
-    def save_coordinates_json(self, coordinates, output_path="robot_coordinates.json"):
+    def save_coordinates_json(self, coordinates, output_path=None):
         """
         Save extracted coordinates to JSON file for robot control.
         
@@ -443,6 +465,12 @@ class SweaterDetector:
             coordinates: Dictionary of coordinates returned by process_image
             output_path: Path to save JSON file
         """
+        if output_path is None:
+            output_path = os.path.join(PROJECT_ROOT, "risultati rete", "robot_coordinates.json")
+        elif not os.path.isabs(output_path) and not os.path.dirname(output_path):
+            output_path = os.path.join(PROJECT_ROOT, "risultati rete", output_path)
+            
+        os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
         with open(output_path, 'w') as f:
             json.dump(coordinates, f, indent=4)
         print(f"Coordinates saved to {output_path}")
@@ -450,21 +478,32 @@ class SweaterDetector:
 
 if __name__ == "__main__":
     # Example Usage
-    detector = SweaterDetector("sweater_segmentation/yolo_run/weights/best.pt")
+    model_path = resolve_model_path()
+    detector = SweaterDetector(model_path)
     
-    # Test on an image
-    #IMAGE_PATH = "dataset_rgbd_maglioncino\\20260109_153431_498491_rgb.png"
-    IMAGE_PATH = "dataset_rgbd_maglioncino/20260806_130310_267623_rgb.png"
+    # Test on an existing image
+    IMAGE_PATH = os.path.join(PROJECT_ROOT, "dataset_rgbd_maglioncino", "20260109_153431_498491_rgb.png")
+    if not os.path.exists(IMAGE_PATH):
+        rgb_dir = os.path.join(PROJECT_ROOT, "dataset_rgbd_maglioncino")
+        if os.path.exists(rgb_dir):
+            for f in os.listdir(rgb_dir):
+                if f.endswith("_rgb.png"):
+                    IMAGE_PATH = os.path.join(rgb_dir, f)
+                    break
 
     print(f"Processing image: {IMAGE_PATH}")
     coordinates, vis_img = detector.process_image(IMAGE_PATH, conf_threshold=0.25)
     
-    # Save visualization
-    cv2.imwrite("yolo_inference_result.jpg", vis_img)
-    print("Visualization saved to yolo_inference_result.jpg")
+    # Save visualization to 'risultati rete'
+    results_dir = os.path.join(PROJECT_ROOT, "risultati rete")
+    os.makedirs(results_dir, exist_ok=True)
+    vis_output = os.path.join(results_dir, "yolo_inference_result.jpg")
+    cv2.imwrite(vis_output, vis_img)
+    print(f"Visualization saved to {vis_output}")
     
     # Save coordinates to JSON for robot control
-    detector.save_coordinates_json(coordinates, "robot_coordinates.json")
+    json_output = os.path.join(results_dir, "robot_coordinates.json")
+    detector.save_coordinates_json(coordinates, json_output)
     
     # Print extracted coordinates
     print("\nExtracted Coordinates:")
