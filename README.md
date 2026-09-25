@@ -23,14 +23,14 @@ Include inoltre l'integrazione completa con **ROS 2** (package `coordinate_conve
    - [4. Inferenza Completa ed Estrazione Coordinate](#4-inferenza-completa-ed-estrazione-coordinate-2d3d)
    - [5. Verifica 3D con Point Cloud e Profondità](#5-verifica-3d-con-point-cloud-e-profondità)
    - [6. Inferenza con Dati Sintetici da Simulazione Unity](#6-inferenza-con-dati-sintetici-da-simulazione-unity)
-5. [Integrazione ROS 2 (`coordinate_converter`) per Unity e UR5 Reale](#-integrazione-ros-2-coordinate_converter-per-unity-e-ur5-reale)
+5. [Algoritmo Geometrico di Estrazione 3D](#-algoritmo-geometrico-di-estrazione-3d)
+6. [Formato dei Dati in Uscita](#-formato-dei-dati-in-uscita)
+7. [Valutazione delle Prestazioni](#-valutazione-delle-prestazioni)
+8. [Integrazione ROS 2 (`coordinate_converter`) per Unity e UR5 Reale](#-integrazione-ros-2-coordinate_converter-per-unity-e-ur5-reale)
    - [A cosa servono i moduli ROS](#a-cosa-servono-i-moduli-ros)
    - [Creazione del Package e Configurazione (Obbligatoria)](#creazione-del-package-e-configurazione-obbligatoria)
    - [Utilizzo con la Simulazione Unity (ROS-TCP-Endpoint)](#utilizzo-con-la-simulazione-unity-ros-tcp-endpoint)
    - [Utilizzo con il Manipolatore UR5 Reale](#utilizzo-con-il-manipolatore-ur5-reale)
-6. [Algoritmo Geometrico di Estrazione 3D](#-algoritmo-geometrico-di-estrazione-3d)
-7. [Formato dei Dati in Uscita](#-formato-dei-dati-in-uscita)
-8. [Valutazione delle Prestazioni](#-valutazione-delle-prestazioni)
 9. [Autori e Riferimenti](#-autori-e-riferimenti)
 
 ---
@@ -165,13 +165,9 @@ Per acquisire nuove coppie di immagini RGB e mappe di profondità sincronizzate 
 
 Se hai etichettato nuove immagini con CVAT (in formato polilinee/poligoni XML):
 1. Converti le annotazioni nel formato compatibile con YOLOv8-seg:
-   ```bash
-   python "scripts + immagini x train/convert_xml_to_yolo.py"
-   ```
+
 2. Suddividi i campioni in set di Training (80%) e Validation (20%):
-   ```bash
-   python "scripts + immagini x train/organize_dataset.py"
-   ```
+
 3. Avvia l'addestramento della rete YOLOv8n-seg:
    ```bash
    python "codice train-test/yolo_train.py"
@@ -230,7 +226,6 @@ Per ispezionare esclusivamente la point cloud RGB-D grezza acquisita:
 ```bash
 python "codice train-test/verifica_depth.py"
 ```
-
 ---
 
 ### 6. Inferenza con Dati Sintetici da Simulazione Unity
@@ -244,6 +239,106 @@ python "codice train-test/test_unity_inference.py"
   * Applica gli intrinseci della telecamera virtuale Unity (FOV 60° verticale).
   * Salva l'immagine risultante in `risultati rete/yolo_inference_unity_result.jpg` e le coordinate in `risultati rete/robot_coordinates_unity.json`.
 
+---
+## 📐 Algoritmo Geometrico di Estrazione 3D
+
+Una volta ottenute le maschere binarie delle istanze rilevate da YOLOv8-seg, la pipeline esegue un raffinamento geometrico in 4 fasi:
+
+```mermaid
+graph TD
+    A[Immagine RGB + Depth] --> B[Inferenza YOLOv8-seg]
+    B --> C[Filtraggio Maschere IoU]
+    C --> D[Y-Averaging Linea Media]
+    D --> E[Campionamento Punti Salienti]
+    E --> F[Proiezione 3D Intrinseci Telecamera]
+    F --> G[Esportazione JSON & Nodi ROS 2 coordinate_converter]
+```
+
+1. **Filtraggio Maschere (IoU Non-Maximum Suppression):** Se compaiono istanze multiple o frammentate per la stessa classe, viene mantenuta quella a confidenza maggiore eliminando le sovrapposizioni spurie.
+2. **Y-Averaging (Estrazione Scheletro Medio):** Per ogni coordinata $x$ appartenente alla maschera, viene calcolato il valor medio delle ordinate $y$:
+   $$\bar{y}(x) = \frac{1}{N_x} \sum_{i=1}^{N_x} y_i$$
+   Questo permette di isolare la linea centrale della cucitura eliminando le variazioni dovute allo spessore del tessuto o a pieghe superficiali.
+3. **Campionamento Geometrico Adattivo:**
+   * **Collar & Hem:** Vengono estratti $N$ punti equidistanti per approssimare fedelmente la curvatura.
+   * **Cuff:** Vengono estratti il punto iniziale e finale di ciascun polsino, ordinati lungo l'asse $X$ per separare automaticamente il polsino sinistro (`polsino_sx`) da quello destro (`polsino_dx`).
+4. **Proiezione Pinhole 3D:** Conoscendo la matrice degli intrinseci della telecamera ($f_x, f_y, c_x, c_y$) e il valore di profondità $Z$ (espresso in metri), ciascun punto $(x_{pix}, y_{pix})$ viene retroproiettato nello spazio tridimensionale:
+   $$X = \frac{(x_{pix} - c_x) \cdot Z}{f_x}, \quad Y = \frac{(y_{pix} - c_y) \cdot Z}{f_y}$$
+
+---
+
+## 💾 Formato dei Dati in Uscita
+
+Le coordinate 3D finali vengono salvate in file **JSON** all'interno della cartella `risultati rete/`.
+
+Esempio di struttura generata da `robot_coordinates_3d.json`:
+
+```json
+{
+    "Cuff": [
+        {
+            "start": [-0.158, 0.082, 0.725],
+            "end": [-0.121, 0.086, 0.724]
+        },
+        {
+            "start": [0.124, 0.085, 0.723],
+            "end": [0.162, 0.081, 0.724]
+        }
+    ],
+    "Hem": [
+        {
+            "points": [
+                [-0.095, -0.152, 0.730],
+                [-0.047, -0.150, 0.731],
+                [0.002, -0.149, 0.730],
+                [0.051, -0.151, 0.729],
+                [0.098, -0.153, 0.730]
+            ]
+        }
+    ],
+    "Collar": [
+        {
+            "left": [-0.042, 0.141, 0.720],
+            "right": [0.043, 0.140, 0.721],
+            "curve_points": [
+                [-0.042, 0.141, 0.720],
+                [-0.021, 0.115, 0.721],
+                [0.001, 0.108, 0.722],
+                [0.022, 0.116, 0.721],
+                [0.043, 0.140, 0.721]
+            ]
+        }
+    ]
+}
+```
+
+Inoltre, gli script stampano direttamente a terminale la definizione NumPy pronta per essere inclusa nel pianificatore di moto del braccio manipolatore nei nodi `coordinate_converter`:
+
+```python
+# Polsino sinistro e destro interpolati
+polsino_sx_raw = self.rete_to_base(np.array([[-0.158, 0.082, 0.725], [-0.121, 0.086, 0.724]]))
+self.polsino_sx_fitto = self.prendi_punti_intermedi(polsino_sx_raw[0], polsino_sx_raw[1])
+
+# Fondo maglia
+self.fondo_maglia = self.rete_to_base(np.array([...]))
+
+# Colletto
+self.colletto = self.rete_to_base(np.array([...]))
+```
+
+---
+
+## 📊 Valutazione delle Prestazioni
+
+Il modello è stato valutato sul validation set al termine delle 30 epoche di training:
+
+| Metrica | Precision | Recall | mAP@50 |
+| :--- | :---: | :---: | :---: |
+| **Box (Detection)** | 85.4% | 85.0% | **90.3%** |
+| **Mask (Segmentation)** | 65.4% | 60.7% | **56.8%** |
+
+### Analisi dei Risultati
+* **Localizzazione Robusta:** L'elevato valore di **mAP@50 per i box (90.3%)** assicura un rilevamento affidabile delle parti anche in presenza di rotazioni o deformazioni del capo.
+* **Segmentazione Ottimale per il Grasping:** Sebbene la complessità dei tessuti morbidi porti a un mAP@50 delle maschere del 56.8%, l'algoritmo di **Y-averaging** estrae fedelmente la mezzeria e compensa eventuali imperfezioni sui bordi del tessuto, fornendo traiettorie di grasping stabili e ripetibili per il robot.
 ---
 
 ## 🤖 Integrazione ROS 2 (`coordinate_converter`) per Unity e UR5 Reale
@@ -362,108 +457,6 @@ source install/setup.bash
    ros2 run coordinate_converter spline_separata_finale
    ```
    Il controllore calcolerà la cinematica inversa DLS in tempo reale inviando i waypoint interpolati allo `scaled_joint_trajectory_controller`.
-
----
-
-## 📐 Algoritmo Geometrico di Estrazione 3D
-
-Una volta ottenute le maschere binarie delle istanze rilevate da YOLOv8-seg, la pipeline esegue un raffinamento geometrico in 4 fasi:
-
-```mermaid
-graph TD
-    A[Immagine RGB + Depth] --> B[Inferenza YOLOv8-seg]
-    B --> C[Filtraggio Maschere IoU]
-    C --> D[Y-Averaging Linea Media]
-    D --> E[Campionamento Punti Salienti]
-    E --> F[Proiezione 3D Intrinseci Telecamera]
-    F --> G[Esportazione JSON & Nodi ROS 2 coordinate_converter]
-```
-
-1. **Filtraggio Maschere (IoU Non-Maximum Suppression):** Se compaiono istanze multiple o frammentate per la stessa classe, viene mantenuta quella a confidenza maggiore eliminando le sovrapposizioni spurie.
-2. **Y-Averaging (Estrazione Scheletro Medio):** Per ogni coordinata $x$ appartenente alla maschera, viene calcolato il valor medio delle ordinate $y$:
-   $$\bar{y}(x) = \frac{1}{N_x} \sum_{i=1}^{N_x} y_i$$
-   Questo permette di isolare la linea centrale della cucitura eliminando le variazioni dovute allo spessore del tessuto o a pieghe superficiali.
-3. **Campionamento Geometrico Adattivo:**
-   * **Collar & Hem:** Vengono estratti $N$ punti equidistanti per approssimare fedelmente la curvatura.
-   * **Cuff:** Vengono estratti il punto iniziale e finale di ciascun polsino, ordinati lungo l'asse $X$ per separare automaticamente il polsino sinistro (`polsino_sx`) da quello destro (`polsino_dx`).
-4. **Proiezione Pinhole 3D:** Conoscendo la matrice degli intrinseci della telecamera ($f_x, f_y, c_x, c_y$) e il valore di profondità $Z$ (espresso in metri), ciascun punto $(x_{pix}, y_{pix})$ viene retroproiettato nello spazio tridimensionale:
-   $$X = \frac{(x_{pix} - c_x) \cdot Z}{f_x}, \quad Y = \frac{(y_{pix} - c_y) \cdot Z}{f_y}$$
-
----
-
-## 💾 Formato dei Dati in Uscita
-
-Le coordinate 3D finali vengono salvate in file **JSON** all'interno della cartella `risultati rete/`.
-
-Esempio di struttura generata da `robot_coordinates_3d.json`:
-
-```json
-{
-    "Cuff": [
-        {
-            "start": [-0.158, 0.082, 0.725],
-            "end": [-0.121, 0.086, 0.724]
-        },
-        {
-            "start": [0.124, 0.085, 0.723],
-            "end": [0.162, 0.081, 0.724]
-        }
-    ],
-    "Hem": [
-        {
-            "points": [
-                [-0.095, -0.152, 0.730],
-                [-0.047, -0.150, 0.731],
-                [0.002, -0.149, 0.730],
-                [0.051, -0.151, 0.729],
-                [0.098, -0.153, 0.730]
-            ]
-        }
-    ],
-    "Collar": [
-        {
-            "left": [-0.042, 0.141, 0.720],
-            "right": [0.043, 0.140, 0.721],
-            "curve_points": [
-                [-0.042, 0.141, 0.720],
-                [-0.021, 0.115, 0.721],
-                [0.001, 0.108, 0.722],
-                [0.022, 0.116, 0.721],
-                [0.043, 0.140, 0.721]
-            ]
-        }
-    ]
-}
-```
-
-Inoltre, gli script stampano direttamente a terminale la definizione NumPy pronta per essere inclusa nel pianificatore di moto del braccio manipolatore nei nodi `coordinate_converter`:
-
-```python
-# Polsino sinistro e destro interpolati
-polsino_sx_raw = self.rete_to_base(np.array([[-0.158, 0.082, 0.725], [-0.121, 0.086, 0.724]]))
-self.polsino_sx_fitto = self.prendi_punti_intermedi(polsino_sx_raw[0], polsino_sx_raw[1])
-
-# Fondo maglia
-self.fondo_maglia = self.rete_to_base(np.array([...]))
-
-# Colletto
-self.colletto = self.rete_to_base(np.array([...]))
-```
-
----
-
-## 📊 Valutazione delle Prestazioni
-
-Il modello è stato valutato sul validation set al termine delle 30 epoche di training:
-
-| Metrica | Precision | Recall | mAP@50 |
-| :--- | :---: | :---: | :---: |
-| **Box (Detection)** | 85.4% | 85.0% | **90.3%** |
-| **Mask (Segmentation)** | 65.4% | 60.7% | **56.8%** |
-
-### Analisi dei Risultati
-* **Localizzazione Robusta:** L'elevato valore di **mAP@50 per i box (90.3%)** assicura un rilevamento affidabile delle parti anche in presenza di rotazioni o deformazioni del capo.
-* **Segmentazione Ottimale per il Grasping:** Sebbene la complessità dei tessuti morbidi porti a un mAP@50 delle maschere del 56.8%, l'algoritmo di **Y-averaging** estrae fedelmente la mezzeria e compensa eventuali imperfezioni sui bordi del tessuto, fornendo traiettorie di grasping stabili e ripetibili per il robot.
 
 ---
 
