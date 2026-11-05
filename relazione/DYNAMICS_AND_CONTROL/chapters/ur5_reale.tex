@@ -54,3 +54,23 @@ controllare l'esecuzione e fermare il robot in caso di anomalie. Infine, la
 scalatura del tempo rispetta i limiti e gli arresti di sicurezza imposti
 dal pendant, aspetto rilevante in un'applicazione in cui il robot opera
 in prossimità dell'operatore. Infine, grazie all'interpolazione interna, il controller garantisce un movimento più fluido e privo di scatti, migliorando la qualità complessiva dell'esecuzione della traiettoria pianificata.
+
+
+\subsection{Utilizzo del sistema}
+
+Anche in questo caso, il sistema si basa sull'utilizzo di due nodi principali: il nodo per la \texttt{home\_position} e il nodo per la pianificazione ed esecuzione della traiettoria.
+Prima di avviare questi nodi, c'è bisogno di avviare il driver del robot UR5, e la trasformazione statica tra la camera e il \texttt{wrist\_2\_link} per allineare correttamente le coordinate del sistema di riferimento della camera con quelle del robot tramite l'utilizzo di \textit{TF}.
+Una volta avviati questi componenti, il flusso di lavoro è simile a quello utilizzato in Unity, con la differenza che la pubblicazione ed esecuzione della traiettoria avviene tramite l'action server e l'action client del controller \texttt{scaled\_joint\_trajectory\_controller}, garantendo un'esecuzione più fluida e sicura della traiettoria pianificata.
+Si parte quindi con il nodo per la \texttt{home\_position}, che porta il robot in una posizione di partenza nota e sicura, e successivamente si esegue lo script python per lo scatto della foto e l'inferenza del modello, che estrae i punti di interesse dalla foto scattata dalla camera.
+Infine, si prendono i punti estratti e si inseriscono all'interno del nodo per la pianificazione ed esecuzione della traiettoria, che si occupa di calcolare la traiettoria ottimale per il robot e di inviarla al controller tramite l'action server.
+
+\section{Test su robot reale - Launcher automatico}
+Per semplificare ulteriormente l'utilizzo del sistema di controllo sul robot reale, è stato sviluppato un launcher automatico che avvia tutti i componenti necessari con un singolo comando.
+Questo launcher comprende l'avvio del nodo per la \texttt{home\_position}, lo scatto della foto, l'inferenza del modello e la pianificazione ed esecuzione della traiettoria per i punti estratti.
+In questo modo, l'operatore può avviare l'intero processo senza doversi preoccupare di avviare manualmente ogni nodo, ma soprattutto di non dover inserire manualmente le coordinate dei punti estratti.
+I nodi interessati sono esattamente gli stessi utilizzati in precedenza, per cui non è richiesta una particolare modifica di essi, se non l'aggiunta di topic per notificare il componente che ha il ruolo di successivo nella catena di esecuzione.
+In particolare, è stata implementata la notifica dell'avvenuto completamento di una fase tramite l'utilizzo di semplici topic dedicati:
+\begin{itemize}
+    \item Nodo per la \texttt{home\_position} $\longrightarrow$ nodo per lo scatto della foto e l'inferenza.
+    \item Nodo per lo scatto della foto e l'inferenza $\longrightarrow$ per la pianificazione e l'esecuzione della traiettoria.
+\end{itemize}
