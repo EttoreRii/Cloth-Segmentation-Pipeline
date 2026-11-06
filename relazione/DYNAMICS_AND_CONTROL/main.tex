@@ -402,24 +402,6 @@ Esempio di JSON:
 
 \input{chapters/pianificazione_traiettoria}
 
-\chapter{Pianificazione Traiettorie e Controllo}
-
-\section{Pianificazione}
-Traiettorie generate con MoveIt! da punti segmentati. Per polsini: ellisse fitting su contour. Velocità: 50 mm/s, accelerazione 500 mm/s². Filtraggio spline per smoothing.
-
-\section{Controllo UR5}
-Controllo ibrido: posizione cartesiana con servo (impedenza 1000 N/m). Feedback visivo ogni 10 cicli per compensare deformazioni (errore < 3 mm).
-
-Pseudocodice:
-\begin{verbatim}
-while not trajectory_complete:
-    current_pose = get_ur5_pose()
-    target_pose = next_waypoint()
-    delta = target_pose - current_pose
-    cmd = PID(delta)
-    ur5.move(cmd)
-\end{verbatim}
-
 \chapter{Risultati e Conclusioni}
 
 Test su 20 maglioncini: successo 85\% (fallimenti per occlusioni). Tempi: segmentazione 20 ms, traiettoria 1.2 s.

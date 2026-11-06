@@ -61,8 +61,52 @@ in prossimità dell'operatore. Infine, grazie all'interpolazione interna, il con
 Anche in questo caso, il sistema si basa sull'utilizzo di due nodi principali: il nodo per la \texttt{home\_position} e il nodo per la pianificazione ed esecuzione della traiettoria.
 Prima di avviare questi nodi, c'è bisogno di avviare il driver del robot UR5, e la trasformazione statica tra la camera e il \texttt{wrist\_2\_link} per allineare correttamente le coordinate del sistema di riferimento della camera con quelle del robot tramite l'utilizzo di \textit{TF}.
 Una volta avviati questi componenti, il flusso di lavoro è simile a quello utilizzato in Unity, con la differenza che la pubblicazione ed esecuzione della traiettoria avviene tramite l'action server e l'action client del controller \texttt{scaled\_joint\_trajectory\_controller}, garantendo un'esecuzione più fluida e sicura della traiettoria pianificata.
-Si parte quindi con il nodo per la \texttt{home\_position}, che porta il robot in una posizione di partenza nota e sicura, e successivamente si esegue lo script python per lo scatto della foto e l'inferenza del modello, che estrae i punti di interesse dalla foto scattata dalla camera.
-Infine, si prendono i punti estratti e si inseriscono all'interno del nodo per la pianificazione ed esecuzione della traiettoria, che si occupa di calcolare la traiettoria ottimale per il robot e di inviarla al controller tramite l'action server.
+
+Si parte quindi con il nodo per la \texttt{home\_position}, che porta il robot in una posizione di partenza nota e sicura.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.75\linewidth]{figures/reale/home_postion_reale.jpeg}
+    \caption{Home\_position del robot reale UR5.}
+    \label{fig:home position del robot reale UR5}
+\end{figure}
+
+Successivamente si esegue lo script python per lo scatto della foto e l'inferenza del modello, che estrae i punti di interesse dalla foto scattata dalla camera.
+Infine, si prendono i punti estratti e si inseriscono all'interno del nodo per la pianificazione ed esecuzione della traiettoria (\texttt{spline\_separata\_finale}), che si occupa esattamente di:
+\begin{enumerate}
+    \item Convertire i punti estratti nel sistema di riferimento del robot tramite l'utilizzo di \textit{TF}.
+    \item Calcolare la traiettoria ottimale per il robot.
+    \item Convertire tutta la traiettoria nello spazio dei giunti tramite la cinematica inversa.
+    \item Inviare tutta la traiettoria una sola volta al controller tramite action.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.75\linewidth]{figures/reale/polsino.png}
+    \caption{Fondo maglia su eseprimento}
+    \label{fig:polsino su esperimento}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.75\linewidth]{figures/reale/fondo_maglia.png}
+    \caption{Fondo maglia su esperimento.}
+    \label{fig:fondo maglia su esperimento}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.75\linewidth]{figures/reale/colletto_1.png}
+    \caption{Inizio colletto su esperimento.}
+    \label{fig:inizio colletto su esperimento}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.75\linewidth]{figures/reale/colletto_2.png}
+    \caption{Fine colletto su esperimento.}
+    \label{fig:fine colletto su esperimento}
+\end{figure}
 
 \section{Test su robot reale - Launcher automatico}
 Per semplificare ulteriormente l'utilizzo del sistema di controllo sul robot reale, è stato sviluppato un launcher automatico che avvia tutti i componenti necessari con un singolo comando.
