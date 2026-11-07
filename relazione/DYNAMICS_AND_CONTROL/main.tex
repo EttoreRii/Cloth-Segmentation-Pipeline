@@ -21,6 +21,7 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \definecolor{custom_green}{rgb}{0,0.6,0}
@@ -132,35 +133,35 @@
 
 
 \begin{titlepage}
-\begin{center}
-\LARGE {\scshape{Università Politecnica delle Marche}}\\[0.5cm]
-\LARGE {\scshape{Ingegneria Informatica e dell'Automazione}}\\[0.7cm]
-\linespread{1}
-\huge {\bfseries Integrazione di una Rete Neurale Artificiale e Controllo Robotico per il Taglio Automatico di Indumenti }\\[1cm]
-\linespread{1}
-\includegraphics[width=5cm]{images/logoUnivpm.jpg}\\[0.5cm]
-\linespread{1.2}
-\Large Corso di\\
-\Large {\scshape{Dynamics and control of intelligent robots and vehicles}} \\[0.3cm]
-\Large {Anno accademico 2025-2026 \\[0.8cm]}
-{\Large Studenti:}
-\hfill {\Large Professore:}\\
-{\Large Gianluca Eremita}
-\hfill
-{\Large Andrea Bonci}\\
-\raggedright{\Large Ettore Ricci\\}
-\raggedleft{\Large Dottorando:\\
-\Large Alessandro Di Biase\\[0.5cm]}
-\centering{
-\includegraphics[width=2cm]{images/dii_new.png}\\[0.3cm]
-\large Dipartimento di Ingegneria dell'Informazione\\[0.3cm]
-}
-\end{center}
+    \begin{center}
+        \LARGE {\scshape{Università Politecnica delle Marche}}\\[0.5cm]
+        \LARGE {\scshape{Ingegneria Informatica e dell'Automazione}}\\[0.7cm]
+        \linespread{1}
+        \huge {\bfseries Integrazione di una Rete Neurale Artificiale e Controllo Robotico per il Taglio Automatico di Indumenti }\\[1cm]
+        \linespread{1}
+        \includegraphics[width=5cm]{images/logoUnivpm.jpg}\\[0.5cm]
+        \linespread{1.2}
+        \Large Corso di\\
+        \Large {\scshape{Dynamics and control of intelligent robots and vehicles}} \\[0.3cm]
+        \Large {Anno accademico 2025-2026 \\[0.8cm]}
+        {\Large Studenti:}
+        \hfill {\Large Professore:}\\
+        {\Large Gianluca Eremita}
+        \hfill
+        {\Large Andrea Bonci}\\
+        \raggedright{\Large Ettore Ricci\\}
+        \raggedleft{\Large Dottorando:\\
+            \Large Alessandro Di Biase\\[0.5cm]}
+        \centering{
+            \includegraphics[width=2cm]{images/dii_new.png}\\[0.3cm]
+            \large Dipartimento di Ingegneria dell'Informazione\\[0.3cm]
+        }
+    \end{center}
 \end{titlepage}
 
 \pagenumbering{arabic}
 \tableofcontents
-\addcontentsline{toc}{chapter}{Introduzione}
+
 \newpage
 
 \pagestyle{plain}
@@ -173,42 +174,28 @@ Il sistema utilizzato è costituito da un manipolatore industriale \emph{Univers
 
 Il task assegnato al gruppo consisteva nel riconoscimento e nella segmentazione di specifiche parti del maglioncino, in particolare polsini, fondo maglia e girocollo, mediante l’impiego di una rete neurale convoluzionale. Una volta individuate e segmentate le regioni di interesse, sono state estratte le coordinate spaziali dei punti rilevanti, utilizzate come input per la successiva fase di pianificazione della traiettoria di taglio.
 
-All’interno del gruppo di lavoro, il progetto è stato suddiviso in due attività principali fortemente interconnesse. Una parte del gruppo si è occupata dello sviluppo del modulo di visione artificiale, comprendente la preparazione del dataset, l’addestramento della rete neurale e l’estrazione delle informazioni geometriche dalle maschere di segmentazione. L’altra parte si è concentrata sulla definizione delle traiettorie di taglio e sul controllo del manipolatore UR5, progettando una strategia di controllo in grado di seguire i percorsi generati a partire dai dati forniti dal sistema di percezione. L’integrazione tra i due moduli ha permesso di realizzare un flusso completo che va dall’acquisizione sensoriale alla realizzazione dell’azione robotica.
-
 Lo scopo finale del lavoro è dimostrare la fattibilità di un approccio \emph{vision-guided} per il taglio robotizzato di tessuti deformabili, evidenziando le principali sfide legate all’incertezza percettiva, alla variabilità del materiale e al controllo del manipolatore in presenza di traiettorie complesse.
-
-La restante parte della relazione è organizzata come segue. Nel Capitolo~1 viene descritto il sistema Hardware utilizzato, con particolare attenzione al setup sperimentale. Nel Capitolo~2 viene descritto il sistema Software e l’ambiente di simulazione utilizzato. Nel Capitolo~4 viene approfondito il modulo di visione artificiale, illustrando il dataset, l’architettura della rete neurale e i risultati di segmentazione ottenuti. Nel Capitolo~5 viene presentata la pianificazione delle traiettorie e la strategia di controllo adottata per il manipolatore UR5. Infine, nel Capitolo~6 vengono discussi i risultati sperimentali e vengono tratte le conclusioni, evidenziando possibili sviluppi futuri del lavoro.
 
 \chapter{Hardware del Sistema}
 
-Il sistema hardware sviluppato per questo lavoro è costituito da un manipolatore collaborativo Universal Robots UR5, una telecamera RGB-D Intel RealSense D435i e una postazione di lavoro progettata per consentire la manipolazione del capo di abbigliamento in condizioni controllate. L'integrazione di questi componenti permette di acquisire le informazioni visive del maglione, elaborarle mediante algoritmi di visione artificiale e guidare il robot lungo la traiettoria di taglio pianificata.
+Il sistema hardware utilizzato per questo lavoro è costituito da un manipolatore collaborativo Universal Robots UR5, una telecamera RGB-D Intel RealSense D435i e una postazione di lavoro progettata per consentire la manipolazione del capo di abbigliamento in condizioni controllate. L'integrazione di questi componenti permette di acquisire le informazioni visive del maglione, elaborarle mediante algoritmi di visione artificiale e guidare il robot lungo la traiettoria di taglio pianificata.
 
 \section{Manipolatore UR5}
 
 Il manipolatore utilizzato è un \textit{Universal Robots UR5}, un robot collaborativo (cobot) a sei gradi di libertà progettato per applicazioni di automazione flessibile. Grazie alla sua cinematica seriale, il robot è in grado di raggiungere un'ampia porzione dello spazio di lavoro mantenendo un'elevata precisione di posizionamento, caratteristica fondamentale per operazioni che richiedono accuratezza, come il taglio di materiali tessili.
 
-L'UR5 presenta un raggio operativo di 850 mm e una capacità di carico nominale pari a 5 kg, caratteristiche che lo rendono adatto alla manipolazione di utensili e sensori mantenendo al contempo movimenti fluidi e sicuri. Il manipolatore è equipaggiato con sei giunti rotazionali, ciascuno controllato indipendentemente, che consentono all'end-effector di assumere qualsiasi orientamento richiesto durante l'esecuzione della traiettoria.
+Il manipolatore è equipaggiato con sei giunti rotazionali, ciascuno controllato indipendentemente, che consentono all'end-effector di assumere qualsiasi orientamento richiesto durante l'esecuzione della traiettoria.
 
 Il controllo del robot è realizzato mediante ROS~2 Humble utilizzando il pacchetto \texttt{ur\_robot\_driver}, che consente di comunicare direttamente con il controller del manipolatore. Attraverso tale interfaccia vengono acquisiti continuamente gli stati articolari del robot e inviati i riferimenti di posizione calcolati dall'algoritmo di pianificazione sviluppato nel corso del lavoro.
 
-All'estremità del manipolatore è installata una pinza pneumatica personalizzata, progettata per ospitare un utensile di taglio costituito da una lama rotante. Tale configurazione consente al robot di seguire con precisione il profilo del maglione individuato dal sistema di visione, effettuando le operazioni di taglio lungo la traiettoria pianificata.
+All'estremità del manipolatore è installato un utensile di taglio personalizzato, costituito da una doppia lama. Tale configurazione consente al robot di seguire con precisione il profilo del maglione individuato dal sistema di visione, effettuando le operazioni di taglio lungo la traiettoria pianificata.
 
 \section{Telecamera Intel RealSense D435i}
 
-Per l'acquisizione delle informazioni visive è stata impiegata una telecamera Intel RealSense D435i, una camera RGB-D progettata per applicazioni di robotica, automazione industriale e visione artificiale. Il sensore consente di acquisire simultaneamente immagini a colori e mappe di profondità, fornendo per ogni pixel sia l'informazione cromatica sia la distanza dall'oggetto osservato. Questa caratteristica risulta fondamentale nelle applicazioni di manipolazione robotica, in cui è necessario ricostruire la posizione tridimensionale dei punti di interesse individuati nell'immagine.
-
-La RealSense D435i integra una telecamera RGB ad alta risoluzione e una coppia di sensori infrarossi utilizzati per la stima della profondità mediante tecnologia a luce strutturata e stereo vision attiva. Il dispositivo è inoltre dotato di un proiettore a infrarossi che migliora la qualità della ricostruzione tridimensionale anche in presenza di superfici poco texturizzate, come nel caso dei tessuti.
+Per l'acquisizione delle informazioni visive è stata impiegata una telecamera Intel RealSense D435i. Il sensore consente di acquisire simultaneamente immagini a colori e mappe di profondità, fornendo per ogni pixel sia l'informazione cromatica sia la distanza dall'oggetto osservato. Questa caratteristica risulta fondamentale nelle applicazioni di manipolazione robotica, in cui è necessario ricostruire la posizione tridimensionale dei punti di interesse individuati nell'immagine.
 
 Nel sistema sviluppato, la RealSense è installata direttamente sul manipolatore mediante una configurazione \textit{eye-in-hand}, risultando rigidamente fissata al secondo polso del robot (\texttt{wrist\_2\_link}). In questa configurazione il sensore segue tutti i movimenti del manipolatore, consentendo di osservare il capo di abbigliamento da una posizione sempre nota rispetto al sistema di riferimento del robot.
 
-Le immagini RGB acquisite dalla telecamera vengono utilizzate come input della rete neurale sviluppata per l'individuazione automatica dei punti caratteristici del maglione, quali colletto, polsini e fondo. Contestualmente, la mappa di profondità permette di associare a ciascun punto rilevato una coordinata tridimensionale nel sistema di riferimento della telecamera. Attraverso la trasformazione tra il frame della telecamera e quello della base del manipolatore, ottenuta mediante la calibrazione della configurazione eye-in-hand e pubblicata nel sistema TF di ROS~2, tali punti vengono convertiti nel sistema di riferimento del robot e utilizzati per la generazione della traiettoria dell'end-effector.
-
-% \begin{figure}[H]
-% \centering
-% \includegraphics[width=0.8\textwidth]{setup_hardware.png}
-% \caption{Setup sperimentale con UR5 e RealSense D435i.}
-% \label{fig:setup}
-% \end{figure}
 \chapter{Modulo di Visione Artificiale}
 
 Il modulo di visione artificiale ha l'obiettivo di identificare le parti salienti del maglioncino (colletto, polsini e fondo maglia) e di estrarne le coordinate spaziali necessarie per la manipolazione robotica. Il sistema si basa sull'integrazione di un modello di segmentazione ad istanze e un algoritmo di post-processing geometrico per la proiezione 3D dei punti di interesse.
@@ -280,15 +267,15 @@ Per valutare le prestazioni della rete YOLOv8n-seg, sono state utilizzate le met
 I risultati ottenuti al termine dell'addestramento sono riassunti nella seguente tabella:
 
 \begin{table}[h]
-\centering
-\begin{tabular}{|l|c|c|c|}
-\hline
-\textbf{Metrica} & \textbf{Precision} & \textbf{Recall} & \textbf{mAP@50} \\ \hline
-\textbf{Box (Detection)} & 85.4\% & 85.0\% & 90.3\% \\ \hline
-\textbf{Mask (Segmentation)} & 65.4\% & 60.7\% & 56.8\% \\ \hline
-\end{tabular}
-\caption{Metriche di performance del modello YOLOv8n-seg su validation set.}
-\label{tab:metrics}
+    \centering
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Metrica}             & \textbf{Precision} & \textbf{Recall} & \textbf{mAP@50} \\ \hline
+        \textbf{Box (Detection)}     & 85.4\%             & 85.0\%          & 90.3\%          \\ \hline
+        \textbf{Mask (Segmentation)} & 65.4\%             & 60.7\%          & 56.8\%          \\ \hline
+    \end{tabular}
+    \caption{Metriche di performance del modello YOLOv8n-seg su validation set.}
+    \label{tab:metrics}
 \end{table}
 
 L'elevato valore di mAP@50 per i box (90.3\%) indica un'ottima capacità del modello di localizzare correttamente le zone di interesse. La metrica mAP@50 per le maschere (56.8\%) risulta inferiore, riflettendo la complessità intrinseca della segmentazione di elementi sottili come cuciture e bordi, ma rimane comunque adeguata per l'estrazione della linea media necessaria alla manipolazione.
@@ -324,10 +311,10 @@ L'algoritmo segue i seguenti passaggi:
     \item \textbf{Filtraggio Maschere}: Se più istanze della stessa classe vengono rilevate, viene mantenuta solo quella con il punteggio di confidenza più elevato, applicando un filtraggio basato su Intersection over Union (IoU) per eliminare sovrapposizioni spurie.
     \item \textbf{Y-Averaging (Calcolo Linea Media)}: Per ogni coordinata $x$ lungo la maschera, viene calcolata la media dei valori $y$ dei pixel appartenenti alla maschera. Questo permette di individuare la "linea centrale" dell'elemento (ad esempio, il centro della curva del colletto) ignorando lo spessore del bordo.
     \item \textbf{Campionamento Punti}:
-    \begin{itemize}
-        \item Per il \textbf{Collar} e l' \textbf{Hem}, vengono estratti $N$ punti equidistanti lungo l'asse $x$ per rappresentare la curvatura della cucitura.
-        \item Per i \textbf{Cuff}, vengono estratti unicamente i punti estremi (inizio e fine) per definire l'orientamento del polsino.
-    \end{itemize}
+          \begin{itemize}
+              \item Per il \textbf{Collar} e l' \textbf{Hem}, vengono estratti $N$ punti equidistanti lungo l'asse $x$ per rappresentare la curvatura della cucitura.
+              \item Per i \textbf{Cuff}, vengono estratti unicamente i punti estremi (inizio e fine) per definire l'orientamento del polsino.
+          \end{itemize}
     \item \textbf{Proiezione 3D}: Per ogni punto $(x, y)$ estratto nell'immagine 2D, viene recuperato il valore di profondità $z$ dal frame depth sincronizzato. Sfruttando i parametri intrinseci della camera, le coordinate pixel vengono infine trasformate in coordinate tridimensionali nel sistema di riferimento del robot.
 \end{enumerate}
 
@@ -402,146 +389,9 @@ Esempio di JSON:
 
 \input{chapters/pianificazione_traiettoria}
 
-\chapter{Risultati e Conclusioni}
-
-Test su 20 maglioncini: successo 85\% (fallimenti per occlusioni). Tempi: segmentazione 20 ms, traiettoria 1.2 s.
-
-Le sfide principali (deformabilità, illuminazione) sono state mitigate, dimostrando fattibilità. Futuri sviluppi: multi-view, RL per adattamento, integrazione force-torque.
+\input{chapters/risultati}
 
 \listoffigures
 
-\bibliographystyle{plain}
-\bibliography{references}
 
-
-
-%----------------
-
-
-
-% \newpage
-% \chapter{Sistema}
-% \textcolor{red}{NOTA valido per ogni capitolo: }inserire all'inizio di ogni capitolo una brevissima descrizione del contenuto del capitolo stesso.\\
-% \newline
-% \textcolor{red}{NOTA:} capitolo opzionale.
-% Solo se necessario per comprendere quanto svolto, inserite un capitolo dedicato al sistema su cui avete lavorato (es drone quadrirotore, ballbot ..) dove descrivete ad esempio come è fatto il sistema, come si modella matematicamente e come si può controllare. Nel capitolo inserite solo le informazioni che avete effettivamente utilizzato per svolgere il task assegnatovi (\textcolor{red}{evitate il copia e incolla dalle vecchie relazioni}). Mettete la fonte da cui avete preso le informazioni (es vecchia relazione \cite{Relazione1}).
-% \chapter{Modello matematico}
-% \chapter{Controllo}
-
-% \newpage
-% \chapter{Hardware}
-% \label{Hardware}
-% Inserire sempre un capitolo "Hardware" dove si descrivono tutti i componenti hardware utilizzati (schede, sensori, attuatori..). Dedicare un paragrafo ad ogni componente. Per ogni componente riportare le seguenti informazioni: modello specifico, riferimento bibliografico con link ad un sito web con la documentazione del componente (es \cite{DCdriver}), immagine, pinout, solo le informazioni rilevanti per lo svolgimento del task.
-% \chapter{Componente1}
-% \chapter{Componente2}
-% \chapter{Schema dei collegamenti}
-% Inserire uno schema dei collegamenti analogo a quello in Figura \ref{fig:schema}. Si suggerisce per lo scopo di usare il software "draw.io". Nello schema riportare tutti i collegamenti tra i componenti, specificando quale pin di un componente1 si collega con quale pin di un componente2 (per la maggior parte dei collegamenti dovete cioè avere una linea con 2 label). \\
-% Inserire anche una descrizione testuale dello schema.
-
-% \begin{figure}[H]
-% \centering
-% \includegraphics[width=0.8\textwidth,keepaspectratio]{figures/Schema.JPG}
-% \caption{Schema dei collegamenti}
-% \label{fig:schema}
-% \end{figure}
-
-
-% \chapter{Software}
-% Nell'introduzione al capitolo specificate anche la versione dell'STM32CubeIDE e dell'STM32CubeMX che avete usato (se avete cambiato versione nel corso del progetto mettete l'ultima, quella su cui è sviluppato il codice che consegnate).
-
-% \chapter{Diagramma di flusso}
-% Inserire un diagramma di flusso analogo a quello in Figura \ref{fig:diagramma} che spiega il funzionamento generale del codice sviluppato. Inserire anche una descrizione testuale del funzionamento.
-
-% \begin{figure}[H]
-% \centering
-% \includegraphics[width=0.8\textwidth,keepaspectratio]{figures/diagramma.JPG}
-% \caption{Diagramma di flusso del codice sviluppato}
-% \label{fig:diagramma}
-% \end{figure}
-
-% \chapter{Gestione singoli componenti}
-% Dedicare un pagagrafo ad ogni componente in cui viene spiegato il codice che lo gestisce. Inserite prima una descrizione generale di come si gestisce un componente di quel tipo (aiutandovi con schemi o altro). Poi le configurazioni che sono state fatte sul .ioc per poterlo utilizzare (quale periferiche sono state abilitate, come sono state configurate.. mettete degli screen del .ioc). Infine inserite e spiegate le parti di codice che lo gestiscono.\\
-% \newline
-% \textcolor{red}{NOTA per il codice}: per rendere il codice modulare e riutilizzabile è buona prassi non caricare troppo il main ma creare una libreria per ogni componente. Quindi il componente1 avrà un header file "componente1.h" e un source file "componente1.c", nel source file sono implementate le funzioni che gestiscono il componente, nell'header file ci sono i prototipi di tali funzioni in modo che esse possano essere usate nel main includendolo.\\
-% \newline
-% \textcolor{red}{NOTA per il codice}: non inserire mai nel codice dei parametri numerici senza contesto ma renderli delle costanti definite (usando la direttiva \%define). Se sono delle costanti relative ad uno specifico componente vanno inserite nel relativo header file.\\
-% \newline
-% \textcolor{red}{NOTA per il codice}: per inserire il codice, anziché utilizzare screenshot utilizzate i seguenti comandi.\\
-% Per codice scritto in latex (con linguaggio Python):
-% \begin{lstlisting}[language=Python, caption="Codice in Python"]
-% import numpy as np
-    
-% def incmatrix(genl1,genl2):
-%     m = len(genl1) # The length of the first array
-%     n = len(genl2) # The length of the second array
-%     sum = 0
-    
-%     # Compute 
-%     for i in range(0,n):
-%         for j in range(0, m):
-%             sum += genl1[n]*genl2[m]
-
-%     # Print
-%     print("The sum is %2d" %(sum))   
-    
-%     return M
-% \end{lstlisting}
-% Per codice richiamato da file (con linguaggio C):
-
-% \lstinputlisting[language=Cpp, firstline=4, lastline=8, caption="Codice in C"]{codefiles/example_code.cpp}
-
-% Funziona anche per codice MATLAB:
-% \begin{lstlisting}[language=MATLABc, caption="Codice in MATLAB"]
-% %% PREPARE WORKSPACE
-% close all
-% clearvars
-% clc
-
-% %% OPERATIONS
-% sayhello;
-
-% %% FUNCTIONS
-% function sayhello
-%     fprintf("Hello world!");
-% end
-
-% \end{lstlisting}
-
-
-% \subchapter{Gestione componente1}
-
-% \subchapter{Gestione componente2}
-
-% \chapter{Funzionamento complessivo}
-% Dopo aver spiegato il codice che gestisce i singoli componenti, inserire e commentare le porzioni di codice relative al funzionamento complessivo del programma.
-
-% \chapter{Test e risultati}
-% Dedicate un capitolo a tutti i test effettuati con relativi risultati, includete sia i test finali relativi al funzionamento complessivo, sia i test delle singole parti (se significativi). \\
-% Descrivete in dettaglio le condizioni in cui sono stati svolti i test in modo che siano ripetibili. Durante i test fate dei video e acquisite i dati (es usando la funzione di log di Putty), per i test più rilevanti è opportuno consegnare anche questo materiale per documentare i test effettuati. Nella relazione riportate i risultati con dei grafici come quello in Figura \ref{fig:grafico} (inserite sempre nei grafici le label sugli assi con grandezza e relativa unità di misura). Commentate in modo critico i risultati ottenuti, evidenziando sia quelli positivi sia quelli negativi. 
-
-% \begin{figure}[H]
-% \centering
-% \includegraphics[width=0.8\textwidth,keepaspectratio]{figures/grafico.JPG}
-% \caption{Esempio di grafico}
-% \label{fig:grafico}
-% \end{figure}
-% \chapter{Test1}
-% Per ogni test riportate: cosa state testando, in che condizioni si è svolto il test, riferimenti a video/file di log che consegnate insieme a relazione e codice, grafici dei risultati, commento dei risultati.
-
-% \chapter{Test2}
-
-% \newpage
-% \addcontentsline{toc}{chapter}{Conclusioni e sviluppi futuri}
-% \chapter*{Conclusioni e sviluppi futuri}
-% Riassumere brevemente il lavoro svolto rispetto al task assegnato, evidenziando quali risultati sono stati raggiunti e quali no. Se ci sono aspetti del task non completati spiegare quali sono stati i problemi riscontrati in merito.\\
-% Inserire considerazioni personali su possibili sviluppi futuri dell'attività svolta (idee per migliorarla che non avete avuto modo di sperimentare, aspetti che suggerite di approfondire, problemi da risolvere..).
-
-% \addcontentsline{toc}{chapter}{Appendici}
-% \appendix
-% \chapter{Appendice1}
-% Se necessario ricorrete alle appendici per spiegare le parti "di contorno" dell'attività svolta e/o ciò che non riuscite ad inserire nello schema generale dei capitoli della relazione (es acquisizione dei dati con Matlab).
-
-
-% \bibliographystyle{ieeetr}
-% \bibliography{bibl} 
 \end{document}

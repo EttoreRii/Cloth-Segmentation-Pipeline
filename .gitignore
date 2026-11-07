@@ -69,6 +69,9 @@ Thumbs.db
 
 # File temporanei LaTeX
 relazione/**/*.aux
+relazione/**/*.bbl
+relazione/**/*.blg
+relazione/**/*.synctex(busy)
 relazione/**/*.fdb_latexmk
 relazione/**/*.fls
 relazione/**/*.lof

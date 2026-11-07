@@ -14,12 +14,20 @@ L'architettura del sistema di simulazione in Unity è composta da diversi compon
     \label{fig:architettura_ros2_per_unity}
 \end{figure}
 
+\newpage
 \section{Architettura per il robot reale}
 
 L'architettura del sistema di controllo per il robot reale si basa sulla struttura precedente ma con alcune modifiche per adattarsi alle specifiche del robot e alle sue capacità hardware.
 Nello specifico, invece di utilizzare messaggi su topic per la comunicazione con il robot, si fa uso di action server e action client per gestire le richieste di movimento e le risposte del robot in modo più efficiente, coerentemente con il driver e controller dell'UR5.
 Rispetto al caso precedente, c'è inoltre una trasformazione statica dalla camera al \texttt{wrist\_2\_link} che permette di allineare correttamente le coordinate del sistema di riferimento della camera con quelle del robot tramite poi l'utilizzo di \textit{TF}.
 I principali componenti includono:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{figures/ros/schema_ros_reale.png}
+    \caption{Architettura ROS~2 Robot reale}
+    \label{fig:architettura_rosrobot_unity}
+\end{figure}
 
 \section{Architettura per il robot reale - Launcher automatico}
 

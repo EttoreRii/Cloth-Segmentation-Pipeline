@@ -27,20 +27,20 @@ impostato sul teach pendant del robot: se l'operatore riduce la velocità o inte
 mantenendo la propria forma, senza accumulare errore di inseguimento.
 
 \begin{table}[h]
-\centering
-\begin{tabular}{p{4cm}p{4.5cm}p{4.5cm}}
-\toprule
- & \texttt{forward\_position} & \texttt{scaled\_joint\_trajectory} \\
-\midrule
-Ingresso & singolo setpoint (topic) & traiettoria completa (action) \\
-Interpolazione & assente & presente \\
-Temporizzazione & a carico del nodo & gestita dal controller \\
-Tolleranze e esito & assenti & presenti (feedback e risultato) \\
-Annullamento & non previsto & previsto (cancellazione del goal) \\
-Scalatura di velocità & no & sì (teach pendant) \\
-\bottomrule
-\end{tabular}
-\caption{Confronto tra i due controller.}
+    \centering
+    \begin{tabular}{p{4cm}p{4.5cm}p{4.5cm}}
+        \toprule
+                              & \texttt{forward\_position} & \texttt{scaled\_joint\_trajectory} \\
+        \midrule
+        Ingresso              & singolo setpoint (topic)   & traiettoria completa (action)      \\
+        Interpolazione        & assente                    & presente                           \\
+        Temporizzazione       & a carico del nodo          & gestita dal controller             \\
+        Tolleranze e esito    & assenti                    & presenti (feedback e risultato)    \\
+        Annullamento          & non previsto               & previsto (cancellazione del goal)  \\
+        Scalatura di velocità & no                         & sì (teach pendant)                 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Confronto tra i due controller.}
 \end{table}
 
 Si è scelto lo \texttt{scaled\_joint\_trajectory\_controller} per tre motivi.
@@ -80,32 +80,66 @@ Infine, si prendono i punti estratti e si inseriscono all'interno del nodo per l
     \item Inviare tutta la traiettoria una sola volta al controller tramite action.
 \end{enumerate}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[height=0.75\linewidth]{figures/reale/polsino.png}
-    \caption{Fondo maglia su eseprimento}
-    \label{fig:polsino su esperimento}
-\end{figure}
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[height=0.75\linewidth]{figures/reale/polsino.png}
+%     \caption{Fondo maglia su eseprimento}
+%     \label{fig:polsino su esperimento}
+% \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[height=0.75\linewidth]{figures/reale/fondo_maglia.png}
-    \caption{Fondo maglia su esperimento.}
-    \label{fig:fondo maglia su esperimento}
-\end{figure}
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[height=0.75\linewidth]{figures/reale/fondo_maglia.png}
+%     \caption{Fondo maglia su esperimento.}
+%     \label{fig:fondo maglia su esperimento}
+% \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[height=0.75\linewidth]{figures/reale/colletto_1.png}
-    \caption{Inizio colletto su esperimento.}
-    \label{fig:inizio colletto su esperimento}
-\end{figure}
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[height=0.75\linewidth]{figures/reale/colletto_1.png}
+%     \caption{Inizio colletto su esperimento.}
+%     \label{fig:inizio colletto su esperimento}
+% \end{figure}
 
-\begin{figure}[H]
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[height=0.75\linewidth]{figures/reale/colletto_2.png}
+%     \caption{Fine colletto su esperimento.}
+%     \label{fig:fine colletto su esperimento}
+% \end{figure}
+\clearpage % Forza il testo precedente a chiudersi e manda le immagini alla pagina successiva
+
+\begin{figure}[p]
     \centering
-    \includegraphics[height=0.75\linewidth]{figures/reale/colletto_2.png}
-    \caption{Fine colletto su esperimento.}
-    \label{fig:fine colletto su esperimento}
+    % Prima riga
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.42\textheight, width=\linewidth, keepaspectratio]{figures/reale/polsino.png}
+        \caption{Fondo maglia su esperimento.}
+        \label{fig:polsino su esperimento}
+    \end{minipage}\hfill
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.42\textheight, width=\linewidth, keepaspectratio]{figures/reale/fondo_maglia.png}
+        \caption{Fondo maglia su esperimento.}
+        \label{fig:fondo maglia su esperimento}
+    \end{minipage}
+
+    \vspace{0.5cm} % Spazio verticale tra le due righe
+
+    % Seconda riga
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.42\textheight, width=\linewidth, keepaspectratio]{figures/reale/colletto_1.png}
+        \caption{Colletto su esperimento.}
+        \label{fig:inizio colletto su esperimento}
+    \end{minipage}\hfill
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.42\textheight, width=\linewidth, keepaspectratio]{figures/reale/colletto_2.png}
+        \caption{Colletto su esperimento.}
+        \label{fig:fine colletto su esperimento}
+    \end{minipage}
 \end{figure}
 
 \section{Test su robot reale - Launcher automatico}

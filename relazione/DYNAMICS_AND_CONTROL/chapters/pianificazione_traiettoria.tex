@@ -1,9 +1,9 @@
 \chapter{Pianificazione della traiettoria cartesiana}
 \label{chap:pianificazione_traiettoria}
 
-La pianificazione della traiettoria ha lo scopo di definire il movimento dell'organo terminale del robot nello spazio cartesiano, a partire da un insieme di punti tridimensionali già individuati sulla maglia. Questi punti rappresentano i riferimenti geometrici che il robot deve seguire durante le operazioni di cucitura simulata lungo i polsini, il fondo della maglia e il colletto.
+La pianificazione della traiettoria ha lo scopo di definire il movimento dell'organo terminale del robot nello spazio cartesiano, a partire da un insieme di punti tridimensionali già individuati sulla maglia. Questi punti rappresentano i riferimenti geometrici che il robot deve seguire durante le operazioni di taglio lungo i polsini, il fondo della maglia e il colletto.
 
-Dal punto di vista fisico, non è sufficiente collegare direttamente i punti mediante segmenti rettilinei. Una successione di segmenti può infatti introdurre discontinuità nella direzione del movimento e richiedere variazioni istantanee della velocità in corrispondenza dei vertici. Tali condizioni non sono compatibili con un movimento regolare, poiché comporterebbero accelerazioni elevate e sollecitazioni dinamiche non desiderabili.
+Dal punto di vista fisico, non è sufficiente collegare direttamente i punti mediante segmenti rettilinei, una successione di segmenti può infatti introdurre discontinuità nella direzione del movimento e richiedere variazioni istantanee della velocità in corrispondenza dei vertici. Tali condizioni non sono compatibili con un movimento regolare, poiché comporterebbero accelerazioni elevate e sollecitazioni dinamiche non desiderate.
 
 La traiettoria viene quindi costruita attraverso tre operazioni principali:
 \begin{enumerate}
@@ -17,7 +17,7 @@ Grazie alla sua versatilità, il metodo realizzato può essere applicato sia al 
 
 \section{Organizzazione geometrica del percorso}
 
-La funzione \texttt{genera\_traiettoria\_diversa()} organizza il percorso in otto segmenti consecutivi. Tale suddivisione permette di distinguere le operazioni di cucitura vere e proprie dai movimenti necessari per passare da una regione della maglia alla successiva.
+La funzione \texttt{genera\_traiettoria\_diversa()} organizza il percorso in otto segmenti consecutivi. Tale suddivisione permette di distinguere le operazioni di taglio vere e proprie dai movimenti necessari per passare da una regione della maglia alla successiva.
 
 Indicando con $\mathbf{P}_{\mathrm{start}}$ la posizione iniziale dell'organo terminale e con $\mathcal{P}_{\mathrm{sx}}$, $\mathcal{P}_{\mathrm{fondo}}$, $\mathcal{P}_{\mathrm{dx}}$ e $\mathcal{P}_{\mathrm{coll}}$ gli insiemi di punti relativi, rispettivamente, al polsino sinistro, al fondo, al polsino destro e al colletto, la sequenza è organizzata come segue:
 
@@ -60,9 +60,9 @@ Per la gestione delle coordinate lungo l'asse \textit{z} viene utilizzata distan
 
 \subsection{Uniformazione della quota dei punti - Caso UR5 reale}
 
-Per ridurre le variazioni di quota tra i diversi riferimenti della maglia, la coordinata verticale dei punti dei polsini e del colletto viene uniformata utilizzando una quota di riferimento calcolata a partire dai punti del fondo.
+Per ridurre le variazioni di quota tra i diversi riferimenti della maglia, la coordinata verticale dei punti dei polsini e del colletto viene uniformata utilizzando una quota di riferimento calcolata a partire dai punti del fondo maglia.
 
-Indicando con $z_i$ la coordinata verticale dell'$i$-esimo punto del fondo, la quota comune è
+Indicando con $z_i$ la coordinata verticale dell'$i$-esimo punto del fondo maglia, la $z$ di riferimento è
 
 \begin{equation}
     z_{\mathrm{ref}}
@@ -70,7 +70,7 @@ Indicando con $z_i$ la coordinata verticale dell'$i$-esimo punto del fondo, la q
     \label{eq:quota_riferimento}
 \end{equation}
 
-dove $N_f$ è il numero di punti utilizzati per descrivere il fondo.
+dove $N_f$ è il numero di punti utilizzati per descrivere il fondo maglia.
 
 Per i punti appartenenti ai polsini e al colletto, la coordinata verticale viene quindi sostituita con
 
@@ -78,7 +78,7 @@ Per i punti appartenenti ai polsini e al colletto, la coordinata verticale viene
     z_i' = z_{\mathrm{ref}}.
 \end{equation}
 
-In questo modo, i punti di tali regioni risultano complanari rispetto alla quota scelta, mentre i punti del fondo conservano le proprie coordinate. La scelta semplifica la geometria del percorso e riduce le variazioni verticali introdotte dai punti di riferimento.
+In questo modo, i punti di tali regioni risultano complanari rispetto alla profondità scelta, mentre i punti del fondo maglia conservano le proprie coordinate. La scelta semplifica la geometria del percorso e riduce le variazioni verticali introdotte dai punti di riferimento.
 
 È importante precisare che questa operazione costituisce un'approssimazione geometrica: non descrive direttamente la deformazione della maglia né garantisce che la sua superficie reale sia perfettamente piana.
 
@@ -120,7 +120,7 @@ Nel caso di due punti intermedi, le loro coordinate orizzontali sono ottenute di
     \left(\mathbf{p}_{b,xy}-\mathbf{p}_{a,xy}\right).
 \end{equation}
 
-La quota dei punti intermedi viene aumentata di una quantità prefissata:
+La $z$ dei punti intermedi viene aumentata di una quantità prefissata:
 
 \begin{equation}
     z_{\mathrm{up}} = z_a + h,
@@ -128,11 +128,11 @@ La quota dei punti intermedi viene aumentata di una quantità prefissata:
     \label{eq:quota_raccordo}
 \end{equation}
 
-Quando viene inserito un solo punto intermedio, le sue coordinate orizzontali corrispondono al punto medio tra gli estremi. La quota viene calcolata con la stessa regola.
+Quando viene inserito un solo punto intermedio, le sue coordinate orizzontali corrispondono al punto medio tra gli estremi e la coordinata verticale viene calcolata con la stessa regola.
 
 Dal punto di vista fisico, il sollevamento introduce un percorso che si allontana dalla superficie della maglia durante il trasferimento tra due regioni distanti. Questo accorgimento può ridurre il rischio di interferenza con il tessuto durante gli spostamenti, ma non costituisce una garanzia di assenza di collisioni: tale proprietà dipende anche dalla geometria effettiva della maglia, dalla posizione del tessuto e dalle dimensioni dell'organo terminale.
 
-I raccordi vengono pertanto considerati come segmenti autonomi, ai quali è possibile assegnare limiti cinematici differenti da quelli dei tratti di cucitura.
+I raccordi vengono pertanto considerati come segmenti autonomi, ai quali è possibile assegnare limiti cinematici differenti da quelli dei tratti di taglio effettivo.
 
 \section{Interpolazione mediante spline cubiche}
 
@@ -181,38 +181,20 @@ La curva cartesiana risultante è
 \begin{equation}
     \mathbf{r}(u)=
     \begin{bmatrix}
-        x(u)\\
-        y(u)\\
+        x(u) \\
+        y(u) \\
         z(u)
     \end{bmatrix}.
     \label{eq:curva_cartesiana}
 \end{equation}
 
-Ogni coordinata è interpolata mediante una funzione polinomiale cubica definita a tratti. Le spline naturali impongono che la derivata seconda sia nulla agli estremi del segmento:
-
-\begin{equation}
-    x''(0)=x''(1)=0,
-\end{equation}
-
-con condizioni analoghe per $y(u)$ e $z(u)$.
-
-La costruzione garantisce la continuità della posizione e della derivata prima all'interno del singolo segmento, evitando gli spigoli tipici della connessione diretta tra segmenti rettilinei. La derivata seconda è inoltre continua nei nodi interni della spline.
-
-È tuttavia necessario distinguere la regolarità dei singoli segmenti dalla regolarità dell'intera traiettoria: poiché ogni tratto viene interpolato separatamente, la continuità delle derivate tra segmenti consecutivi non è automaticamente garantita dalla sola interpolazione cubica. I raccordi geometrici e le successive leggi temporali contribuiscono a rendere il movimento più regolare, ma la continuità globale deve essere valutata sui risultati ottenuti.
+Ogni coordinata è interpolata mediante una funzione polinomiale cubica definita a tratti.
 
 \section{Lunghezza della curva e parametro di avanzamento}
 
 Il parametro $u$ descrive la geometria della spline, ma non rappresenta direttamente la distanza percorsa. Infatti, incrementi uguali di $u$ non corrispondono necessariamente a incrementi uguali di lunghezza lungo una curva.
 
-Per associare al percorso una coordinata spaziale fisica, si considera la lunghezza d'arco. La lunghezza totale della spline è definita da
-
-\begin{equation}
-    L = \int_0^1
-    \left\|\frac{d\mathbf{r}(u)}{du}\right\|du.
-    \label{eq:lunghezza_arco}
-\end{equation}
-
-Nel codice, tale integrale viene approssimato numericamente campionando la curva in un elevato numero di punti e sommando le distanze euclidee tra campioni consecutivi:
+Per associare al percorso una coordinata spaziale fisica, si considera la lunghezza d'arco. La lunghezza totale della spline è approssimata numericamente campionando la curva in un elevato numero di punti e sommando le distanze euclidee tra campioni consecutivi:
 
 \begin{equation}
     L \simeq
@@ -322,7 +304,7 @@ La relazione tra tempo e avanzamento viene poi interpolata per ottenere campioni
 
 \subsection{Parametri cinematici dei segmenti}
 
-Nel codice vengono utilizzati limiti differenti in funzione del tipo di tratto. Per i segmenti ordinari di cucitura e per i raccordi non trattati come casi speciali, i valori di riferimento sono
+Nel codice vengono utilizzati limiti differenti in funzione del tipo di tratto. Per i segmenti ordinari di taglio e per i raccordi non trattati come casi speciali, i valori di riferimento sono
 
 \begin{equation}
     v_{\max}=0.06\,\mathrm{m/s},
@@ -338,7 +320,7 @@ Per il segmento finale relativo al colletto vengono utilizzati valori inferiori:
     a_{\max}=0.002\,\mathrm{m/s^2}.
 \end{equation}
 
-Per il primo segmento di avvicinamento e per il raccordo identificato dal codice con indice sei vengono invece assegnati valori più elevati:
+Per il primo segmento di avvicinamento e per il raccordo che collega il punto finale del polsino destro con il punto inziale del colletto, vengono invece assegnati valori più elevati:
 
 \begin{equation}
     v_{\max}=0.2\,\mathrm{m/s},
@@ -497,23 +479,3 @@ Per ogni istante campionato sono quindi disponibili:
 \end{itemize}
 
 La pianificazione produce così una descrizione cinematica completa del movimento nello spazio cartesiano. La traiettoria non specifica soltanto quali punti attraversare, ma anche come procedere lungo il percorso e come orientare l'organo terminale durante ciascun tratto.
-
-\section{Considerazioni fisiche e limiti del modello}
-
-La metodologia adottata consente di controllare separatamente la geometria del percorso e la sua evoluzione temporale. L'interpolazione con spline cubiche riduce le discontinuità geometriche all'interno dei singoli segmenti, mentre i profili di velocità e accelerazione limitano la rapidità con cui il percorso viene attraversato.
-
-Questi aspetti sono particolarmente rilevanti nel contesto della manipolazione di un tessuto. Un movimento troppo rapido o caratterizzato da variazioni brusche può aumentare le sollecitazioni dinamiche e compromettere la precisione con cui l'utensile segue la linea desiderata. Al contrario, una velocità più contenuta nei tratti delicati permette di adottare una strategia di movimento più prudente.
-
-È tuttavia importante distinguere la pianificazione cinematica dalla modellazione dinamica dell'interazione con il tessuto. Il profilo di velocità limita la velocità tangenziale e l'accelerazione lungo il percorso, ma non calcola direttamente le forze di contatto, la tensione della maglia o la sua deformazione. Inoltre, l'accelerazione cartesiana totale non coincide necessariamente con la sola accelerazione tangenziale, poiché la curvatura del percorso introduce anche una componente normale:
-
-\begin{equation}
-    \mathbf{a}(t)=
-    a_t(t)\mathbf{t}(t)
-    +v(t)^2\kappa(t)\mathbf{n}(t),
-\end{equation}
-
-dove $\kappa(t)$ è la curvatura locale e $\mathbf{n}(t)$ è il versore normale alla traiettoria. Di conseguenza, anche quando il modulo dell'accelerazione tangenziale è limitato, curve molto strette possono generare accelerazioni normali significative.
-
-Infine, la pianificazione viene eseguita separatamente per ciascun segmento. La continuità della posizione tra i tratti è favorita dalla costruzione dei punti di raccordo, ma la continuità della velocità e dell'accelerazione ai confini tra segmenti dipende anche dai profili temporali assegnati e dalla loro concatenazione. Per questo motivo, la verifica della traiettoria completa mediante grafici di posizione, velocità e orientamento costituisce un passaggio importante per individuare eventuali variazioni indesiderate.
-
-In sintesi, il metodo consente di ottenere un percorso cartesiano regolare e parametrizzato nel tempo, con una velocità adattata alle diverse fasi del movimento. La qualità fisica del movimento dipende tuttavia anche dalla curvatura locale, dalla continuità tra segmenti e dall'effettiva interazione tra organo terminale e tessuto.
