@@ -80,6 +80,15 @@ class KinematicController(Node):
         self.dt    = 0.01#0.025#0.04#0.025  #0.05 corretto
         self.finito_traiettoria = False
 
+        #Tracking dati
+        self.recording = False
+        self.t_goal = None
+        self.log_t = []
+        self.log_x = []
+        #AGGIUNTI DOPO lat e t_goal_sec
+        self.lat = []
+        self.t_goal_sec = None
+
         self.get_logger().info("KinematicController avviato!")
 
 
@@ -94,6 +103,20 @@ class KinematicController(Node):
                 return
 
         self.q_current = q
+
+        if self.recording:
+            """PRIMA
+            t = (self.get_clock().now() - self.t_goal).nanoseconds * 1e-9
+            self.log_t.append(t)
+            self.log_x.append(self.fk(q)[0:3, 3])"""
+            stamp = msg.header.stamp
+            t_msg = stamp.sec + stamp.nanosec * 1e-9
+            if t_msg == 0.0:                                   # driver senza stamp: fallback
+                t_msg = self.get_clock().now().nanoseconds * 1e-9
+            t = t_msg - self.t_goal_sec
+            self.lat.append(self.get_clock().now().nanoseconds * 1e-9 - t_msg)
+            self.log_t.append(t)
+            self.log_x.append(self.fk(q)[0:3, 3])
 
         if not self.finito_traiettoria:
             if not self.tf_buffer.can_transform('base', 'camera_link', rclpy.time.Time()):
@@ -171,73 +194,14 @@ class KinematicController(Node):
         else:
             P_start = np.array([-0.4869, -0.10915, 0.431859])
 
-        """
-        polsino_sx_raw = self.rete_to_base(np.array([[-369.19, 203.18, 515.0], [-286.19, 234.15, 515.0]]))
-        self.polsino_sx_fitto = self.prendi_punti_intermedi(polsino_sx_raw[0], polsino_sx_raw[1])
+        
 
-        polsino_dx_raw = self.rete_to_base(np.array([[294.86, 229.2, 515.0], [377.87, 205.66, 515.0]]))
-        self.polsino_dx_fitto = self.prendi_punti_intermedi(polsino_dx_raw[0], polsino_dx_raw[1])
-
-        self.fondo_maglia = self.rete_to_base(np.array([
-            [-151.15, 208.14, 515.0], [-117.7, 210.61, 515.0],
-            [-85.48,  208.14, 515.0], [-52.03, 208.14, 515.0],
-            [-19.82,  208.14, 515.0], [13.63,  206.9,  515.0],
-            [45.84,   205.66, 515.0], [79.29,  205.66, 515.0],
-            [111.5,   208.14, 515.0], [144.95, 208.14, 515.0]
-        ]))
-
-        self.colletto = self.rete_to_base(np.array([
-            [-81.77,  -253.98, 515.0], [-60.71, -241.59, 515.0],
-            [-39.64,  -204.42, 515.0], [-17.34, -193.27, 515.0],
-            [3.72,    -192.03, 515.0], [24.78,  -190.79, 515.0],
-            [45.84,   -194.51, 515.0], [68.14,  -205.66, 515.0],
-            [89.2,    -242.83, 515.0], [110.26, -252.74, 515.0],
-        ]))"""
-
-        #CAMERA VERA
-
-        """polsino_sx_raw = self.rete_to_base(np.array([[-299.44, 195.79, 787.0], [-177.87, 204.75, 787.0]]))
-        self.polsino_sx_fitto = self.prendi_punti_intermedi(polsino_sx_raw[0], polsino_sx_raw[1])
-
-        polsino_dx_raw = self.rete_to_base(np.array([[304.39, 176.91, 800.0], [411.33, 168.68, 798.0]]))
-        self.polsino_dx_fitto = self.prendi_punti_intermedi(polsino_dx_raw[0], polsino_dx_raw[1])
-
-        self.fondo_maglia = self.rete_to_base(np.array([
-            [-102.67, 185.3, 770.0],
-            [-66.37, 188.91, 785.0],
-            [-28.19, 185.79, 788.0],
-            [10.21, 181.25, 785.0],
-            [48.57, 181.48, 786.0],
-            [88.52, 180.89, 789.0],
-            [126.69, 186.83, 787.0],
-            [164.87, 189.15, 786.0],
-            [203.47, 190.67, 787.0],
-            [243.7, 194.7, 793.0],
-        ]))
-
-        self.colletto = self.rete_to_base(np.array([
-            [-54.84, -358.09, 992.0],
-            [-28.39, -340.68, 970.0],
-            [-3.11, -295.66, 957.0],
-            [21.69, -282.03, 953.0],
-            [46.24, -280.55, 948.0],
-            [69.73, -282.03, 953.0],
-            [95.02, -283.51, 958.0],
-            [119.94, -297.53, 958.0],
-            [148.04, -340.66, 979.0],
-            [177.06, -354.12, 999.0],
-        ]))"""
-
-        #polsino_sx_raw = self.rete_to_base_tf(np.array([[-360.43, 214.64, 740.0], [-249.69, 219.28, 756.0]]))
         polsino_sx_raw = self.rete_to_base_tf(np.array([[-465.31, 187.34, 920.0], [-339.23, 203.21, 905.0]]))
         self.polsino_sx_fitto = self.prendi_punti_intermedi(polsino_sx_raw[0], polsino_sx_raw[1])
-        #self.polsino_sx_fitto[:, 1] -= 0.09
         self.polsino_sx_fitto = self.costante_z(self.polsino_sx_fitto, usa_iqr=False)
 
-        #polsino_dx_raw = self.rete_to_base_tf(np.array([[238.63, 246.57, 817.5], [363.9, 250.31, 848.5]]))
         polsino_dx_raw = self.rete_to_base_tf(np.array([[254.32, 216.99, 888.0], [378.4, 216.99, 888.0]]))
         self.polsino_dx_fitto = self.prendi_punti_intermedi(polsino_dx_raw[0], polsino_dx_raw[1])
-        #self.polsino_dx_fitto[:, 1] -= 0.09
         self.polsino_dx_fitto = self.costante_z(self.polsino_dx_fitto, usa_iqr=False)
 
         self.fondo_maglia = self.rete_to_base_tf(np.array([
@@ -248,19 +212,9 @@ class KinematicController(Node):
             [133.09, 205.58, 881.0],
             [174.79, 210.65, 886.0],
         ]))
-        #self.fondo_maglia[:, 1] -= 0.09
+       
         self.fondo_maglia = self.costante_z(self.fondo_maglia, usa_iqr=False)
 
-        """self.colletto = self.rete_to_base_tf(np.array([
-            [-106.5, -323.96, 859.0],
-            [-59.51, -271.94, 856.0],
-            [-36.87, -247.61, 855.0],
-            [-14.37, -246.22, 860.0],
-            [9.78, -248.22, 862.0],
-            [32.75, -251.23, 867.5],
-            [56.17, -262.23, 875.5],
-            [105.74, -320.02, 891.5],
-        ]))"""
         self.colletto = self.rete_to_base_tf(np.array([
             [-111.77, -329.89, 1019.0],
             [-57.16, -275.56, 1005.0],
@@ -271,7 +225,6 @@ class KinematicController(Node):
             [74.13, -277.77, 1001.0],
             [128.26, -320.62, 1011.0],
         ]))
-        #self.colletto[:, 1] -= 0.09
         self.colletto = self.costante_z(self.colletto, usa_iqr=False)
 
         """z_ref = np.mean(self.polsino_sx_fitto[:, 2])
@@ -282,13 +235,13 @@ class KinematicController(Node):
         self.polsino_dx_fitto[:, 2] = z_ref
         self.polsino_sx_fitto[:, 2]     = z_ref
         self.colletto[:, 2]         = z_ref
-                
+               
 
-        print("Polsino sx: ", self.polsino_sx_fitto)
+        """print("Polsino sx: ", self.polsino_sx_fitto)
         print("Polsino dx: ", self.polsino_dx_fitto)
         print("Fondo maglia: ", self.fondo_maglia)
         print("Colletto: ", self.colletto)
-
+        """
 
         trapezoids = self.build_trapezoids(P_start)
 
@@ -319,7 +272,7 @@ class KinematicController(Node):
             a_max_i = 0.002 if is_colletto else 0.005
 
             if i == 0 or i == 6:
-                v_max_i = 0.25#0.06
+                v_max_i = 0.2#0.06
                 a_max_i = 0.06#0.006
 
             if is_transition:
@@ -345,6 +298,7 @@ class KinematicController(Node):
         
         self.R_d  = np.vstack(all_R)
         self.N    = len(self.x_d)
+        self.seg_bounds = np.cumsum([len(x) for x in all_x])
         self.finito_traiettoria = True
 
         import matplotlib.pyplot as plt
@@ -365,22 +319,6 @@ class KinematicController(Node):
         #self.pubblica_traiettoria_desiderata()
         self.get_logger().info(f"Traiettoria: {self.N} punti a {1/self.dt:.0f} Hz")
 
-    def smussa_z(self, P, window=3):
-        P = P.copy()
-        z = P[:, 2]
-        kernel = np.ones(window) / window
-        z_pad = np.pad(z, (window//2, window//2), mode='edge')
-        P[:, 2] = np.convolve(z_pad, kernel, mode='valid')
-        return P
-
-    def smussa_z_grezza(self, punti_raw, window=3):
-        """Smussa la colonna z (profondità) sui punti grezzi, prima della trasformazione."""
-        punti_raw = punti_raw.astype(float).copy()
-        z = punti_raw[:, 2]
-        kernel = np.ones(window) / window
-        z_pad = np.pad(z, (window // 2, window // 2), mode='edge')
-        punti_raw[:, 2] = np.convolve(z_pad, kernel, mode='valid')
-        return punti_raw
 
     def costante_z(self, P, metodo='mediana', usa_iqr=True, k_iqr=1.0):
         """Sostituisce la colonna z di tutti i punti con un unico valore costante.
@@ -423,79 +361,6 @@ class KinematicController(Node):
 
         P[:, 2] = z_costante
         return P
-
-    def costante_z_iqr_strict(self, P, q_low=25, q_high=75):
-        """Calcola la z costante come media del 50% centrale (IQR stretto),
-        ma la applica a TUTTI i punti originali, senza scartarli."""
-        P = P.copy()
-        z = P[:, 2]
-
-        if len(z) < 4:
-            z_costante = np.median(z)
-        else:
-            q1 = np.percentile(z, q_low)
-            q3 = np.percentile(z, q_high)
-            mask = (z >= q1) & (z <= q3)
-            z_validi = z[mask]
-            z_costante = np.mean(z_validi) if z_validi.size > 0 else np.median(z)
-
-        P[:, 2] = z_costante
-        return P
-
-    def correggi_solo_z(self, points_3d, q_low=25, q_high=75):
-        if len(points_3d) == 0:
-            return points_3d
-
-        corrected_points = points_3d.copy()
-        z_coords = points_3d[:, 2]
-
-        q1_gialla = np.percentile(z_coords, q_low)
-        q3_verde = np.percentile(z_coords, q_high)
-
-        mask_z_valide = (z_coords >= q1_gialla) & (z_coords <= q3_verde)
-        z_target_sicura = np.median(z_coords[mask_z_valide])
-
-        mask_z_anomale = ~mask_z_valide
-        corrected_points[mask_z_anomale, 2] = z_target_sicura
-
-        return corrected_points
-
-    def rete_to_base(self, punti_rete: np.ndarray) -> np.ndarray:
-        # Step 1: rete → camera (mm → m, inversione asse Y)
-        p_camera = np.column_stack([
-            punti_rete[:, 0] / 1000.0,
-            -punti_rete[:, 1] / 1000.0,
-            punti_rete[:, 2] / 1000.0,
-        ])
-
-        # Step 2: camera → base Unity
-        """ GIUSTA PER VERA HOMEPOSITION
-        T = np.array([
-            [ 0.0,  1.0,  0.0,  0.52370],
-            [ 0.0,  0.0, -1.0,  0.56416],
-            [-1.0,  0.0,  0.0,  0.10915],
-            [ 0.0,  0.0,  0.0,  1.0    ]
-        ])"""
-
-        T = np.array([
-            [ 0.0109,  -0.97763,  -0.21006,  -0.3306],
-            [ -0.00939,  0.20996, -0.97766,  0.91691],
-            [0.99990,  0.01263,  -0.00689,  -0.10477],
-            [ 0.0,  0.0,  0.0,  1.0    ]            
-        ])
-
-
-        ones         = np.ones((len(p_camera), 1))
-        P_h          = np.hstack([p_camera, ones])
-        P_base_unity = (T @ P_h.T).T[:, :3]
-
-        # Step 3: base Unity → base ROS
-        points_ros = np.zeros_like(P_base_unity)
-        points_ros[:, 0] = -P_base_unity[:, 2]  # x_ros = -z_unity
-        points_ros[:, 1] =  P_base_unity[:, 0]  # y_ros =  x_unity
-        points_ros[:, 2] =  P_base_unity[:, 1]  # z_ros =  y_unity
-
-        return points_ros
     
 
     def rete_to_base_tf(self, punti_rete: np.ndarray) -> np.ndarray:
@@ -928,6 +793,9 @@ class KinematicController(Node):
     # =========================================================
 
     def control_loop(self):
+        """IMPORTANTE
+        Non più utilizzato, veniva usato per pubblicare un punto alla volta
+        """
         if self.q_current is None:
             self.get_logger().warn("Stato robot non ancora ricevuto...")
             return
@@ -991,6 +859,8 @@ class KinematicController(Node):
         q_traj  = np.zeros((self.N, 6))
         dq_traj = np.zeros((self.N, 6))
 
+        dq_raw_traj = np.zeros((self.N, 6)) #adesso
+
         q = self.q_current.copy()
 
         for k in range(self.N):
@@ -1009,14 +879,17 @@ class KinematicController(Node):
 
             J     = self.jacobian(q)
             J_inv = self.dls_inverse(J)
+            dq_raw = J_inv @ v_ref                  # NUOVO
             dq    = np.clip(J_inv @ v_ref, -self.dq_max, self.dq_max)
 
             q_traj[k]  = q
             dq_traj[k] = dq
 
             # integrazione in avanti: il q "attuale" per il prossimo campione
+            dq_raw_traj[k] = dq_raw                 # NUOVO
             q = q + dq * self.dt
 
+        self.report_clip(dq_raw_traj, dq_traj, q_traj)   # NUOVO
         return q_traj, dq_traj
 
 
@@ -1067,6 +940,16 @@ class KinematicController(Node):
             return
 
         self.get_logger().info("Goal ACCETTATO, esecuzione in corso...")
+        """
+        PRIMA
+        self.t_goal = self.get_clock().now()
+        self.log_t, self.log_x = [], []
+        self.recording = True"""
+
+        self.t_goal_sec = self.get_clock().now().nanoseconds * 1e-9
+        self.log_t, self.log_x, self.lat = [], [], []
+        self.recording = True
+
         result_future = goal_handle.get_result_async()
         result_future.add_done_callback(self.result_callback)
 
@@ -1074,6 +957,139 @@ class KinematicController(Node):
     def result_callback(self, future):
         result = future.result().result
         self.get_logger().info(f">>> Esecuzione terminata. error_code={result.error_code}, error_string='{result.error_string}' <<<")
+        self.recording = False
+        self.analizza_tracking()
+
+    def analizza_tracking(self):
+        import os, time
+        import matplotlib.pyplot as plt
+        from scipy.spatial import cKDTree
+
+        if len(self.log_t) < 2:
+            self.get_logger().warn("Nessun dato registrato")
+            return
+
+        t = np.array(self.log_t)
+        X = np.array(self.log_x)                                   # reale (M,3)
+        P_d = np.column_stack((self.x_d, self.y_d, self.z_d))      # desiderata (N,3)
+        t_d = (np.arange(self.N) + 1) * self.dt                    # istante di ogni punto
+
+        # desiderata interpolata agli istanti misurati
+        Xd = np.column_stack([np.interp(t, t_d, P_d[:, i]) for i in range(3)])
+        err = X - Xd
+        err_t = np.linalg.norm(err, axis=1)                        # errore temporale
+        err_g, _ = cKDTree(P_d).query(X)                           # errore geometrico
+
+        for nome, e in (("temporale", err_t), ("geometrico", err_g)):
+            self.get_logger().info(
+                f"Errore {nome}: medio={e.mean()*1000:.2f} mm, "
+                f"RMS={np.sqrt((e**2).mean())*1000:.2f} mm, max={e.max()*1000:.2f} mm")
+
+        # salvataggio dati grezzi per la relazione
+        tag = time.strftime("%Y%m%d_%H%M%S")
+        out = os.path.expanduser(f"~/tracking_{tag}")
+        np.savez(out + ".npz", t=t, reale=X, desiderata=Xd, err_t=err_t, err_g=err_g)
+
+        fig, ax = plt.subplots(3, 2, figsize=(14, 9))
+        for i, nome in enumerate("xyz"):
+            ax[i, 0].plot(t_d, P_d[:, i] * 1000, label="desiderata")
+            ax[i, 0].plot(t, X[:, i] * 1000, "--", label="reale")
+            ax[i, 0].set_ylabel(f"{nome} [mm]")
+            ax[i, 0].grid(True)
+        ax[2, 0].set_xlabel("tempo [s]")
+        ax[0, 0].legend()
+
+        ax[0, 1].plot(t, err_t * 1000, label="temporale")
+        ax[0, 1].plot(t, err_g * 1000, label="geometrico")
+        ax[0, 1].set_ylabel("errore [mm]")
+        ax[0, 1].legend()
+        ax[0, 1].grid(True)
+
+        ax[1, 1].plot(P_d[:, 0] * 1000, P_d[:, 1] * 1000, label="desiderata")
+        ax[1, 1].plot(X[:, 0] * 1000, X[:, 1] * 1000, "--", label="reale")
+        ax[1, 1].set_xlabel("x [mm]"); ax[1, 1].set_ylabel("y [mm]")
+        ax[1, 1].set_aspect("equal"); ax[1, 1].legend(); ax[1, 1].grid(True)
+
+        ax[2, 1].plot(t, err[:, 0] * 1000, label="ex")
+        ax[2, 1].plot(t, err[:, 1] * 1000, label="ey")
+        ax[2, 1].plot(t, err[:, 2] * 1000, label="ez")
+        ax[2, 1].set_xlabel("tempo [s]"); ax[2, 1].set_ylabel("errore [mm]")
+        ax[2, 1].legend(); ax[2, 1].grid(True)
+
+        # confini dei segmenti, se disponibili
+        for b in getattr(self, "seg_bounds", []):
+            for a in (ax[0, 0], ax[0, 1], ax[2, 1]):
+                a.axvline(b * self.dt, color="gray", lw=0.5, ls=":")
+
+        plt.tight_layout()
+        plt.savefig(out + ".png", dpi=150)
+        self.get_logger().info(f"Salvati {out}.npz e {out}.png")
+        #AGGIUNTO ADESSO 2 righe
+        lat = np.array(self.lat)
+        self.get_logger().info(
+            f"Latenza stato->callback: media={lat.mean()*1000:.1f} ms, max={lat.max()*1000:.1f} ms")
+        plt.show()
+
+
+    def report_clip(self, dq_raw, dq, q_traj):
+        clipped = np.abs(dq_raw) > self.dq_max            # (N,6)
+        n_any = int(clipped.any(axis=1).sum())
+        self.get_logger().info(
+            f"Clip dq_max: {n_any}/{self.N} campioni ({100*n_any/self.N:.2f}%)")
+
+        for j, name in enumerate(self.joint_names):
+            dmax = np.abs(dq_raw[:, j]).max()
+            self.get_logger().info(
+                f"  {name}: clip={int(clipped[:, j].sum())}, "
+                f"|dq| richiesto max={dmax:.2f} rad/s "
+                f"({100*dmax/self.dq_max[j]:.0f}% del limite {self.dq_max[j]:.2f})")
+
+        if n_any:
+            idx = np.where(clipped.any(axis=1))[0]
+            self.get_logger().warn(
+                f"Clip tra t={idx[0]*self.dt:.2f}s e t={idx[-1]*self.dt:.2f}s")
+            bounds = [0, *getattr(self, "seg_bounds", [self.N])]
+            for s in range(len(bounds) - 1):
+                n = int(clipped[bounds[s]:bounds[s+1]].any(axis=1).sum())
+                if n:
+                    self.get_logger().warn(f"  segmento {s+1}: {n} campioni clippati")
+
+        # accelerazioni di giunto effettivamente comandate
+        ddq = np.abs(np.diff(dq, axis=0)) / self.dt
+        for j, name in enumerate(self.joint_names):
+            self.get_logger().info(f"  {name}: |ddq| max={ddq[:, j].max():.1f} rad/s²")
+
+        # --- NUOVO: dove avviene il picco di wrist_3 ---
+        k3 = int(ddq[:, 5].argmax()) + 1          # +1: diff[k] è tra i campioni k e k+1
+        t3 = k3 * self.dt
+        bounds = [0, *getattr(self, "seg_bounds", [self.N])]
+        seg3 = next(s for s in range(len(bounds) - 1) if bounds[s] <= k3 < bounds[s + 1]) + 1
+        self.get_logger().info(
+            f"wrist_3 |ddq| max={ddq[:, 5].max():.1f} rad/s² a t={t3:.2f}s (segmento {seg3}), "
+            f"dq prima/dopo: {dq[k3-1, 5]:.3f} -> {dq[k3, 5]:.3f} rad/s, "
+            f"elbow={np.rad2deg(q_traj[k3, 2]):.1f} deg")
+
+        # errore tra la traiettoria pianificata (fk) e la cartesiana desiderata
+        X_plan = np.array([self.fk(q)[0:3, 3] for q in q_traj])
+        P_d = np.column_stack((self.x_d, self.y_d, self.z_d))
+        e_plan = np.linalg.norm(X_plan - P_d, axis=1)
+        self.get_logger().info(
+            f"Errore di pianificazione: medio={e_plan.mean()*1000:.2f} mm, "
+            f"max={e_plan.max()*1000:.2f} mm (a t={e_plan.argmax()*self.dt:.2f}s)")
+
+        r_des  = np.hypot(self.x_d, self.y_d)
+        r_plan = np.hypot(X_plan[:, 0], X_plan[:, 1])
+        k = e_plan.argmax()
+        self.get_logger().info(
+            f"Raggio max: desiderato={r_des.max()*1000:.0f} mm, pianificato={r_plan.max()*1000:.0f} mm; "
+            f"a t={k*self.dt:.2f}s: des={r_des[k]*1000:.0f}, pian={r_plan[k]*1000:.0f}")
+        self.get_logger().info(
+            f"Elbow a t={k*self.dt:.2f}s: {np.rad2deg(q_traj[k, 2]):.1f} deg")
+
+        bounds = [0, *getattr(self, "seg_bounds", [self.N])]
+        for s in range(len(bounds) - 1):
+            e = e_plan[bounds[s]:bounds[s+1]]
+            self.get_logger().info(f"  segmento {s+1}: err pian. medio={e.mean()*1000:.1f} mm, max={e.max()*1000:.1f} mm")
 
 
 def main(args=None):
