@@ -1,0 +1,154 @@
+\chapter{Utilizzo del robot reale UR5}
+\label{chap:ur5_reale}
+
+Dopo aver sviluppato e testato il sistema di controllo del robot in ambiente simulato con Unity, l'implementazione è stata estesa per consentire l'utilizzo del robot reale UR5.
+Questa sezione descrive le modifiche apportate all'architettura e al flusso di lavoro per adattarsi alle specifiche del robot reale, garantendo un'integrazione efficace con il sistema di controllo basato su ROS~2.
+
+\section{Polyscope e test preliminari}
+Prima ancora di passare al robot reale, abbiamo fatto utilizzo di un ulteriore simulatore, ovvero Polyscope, che ci ha permesso di testare il sistema di controllo effettivo in un ambiente virtuale più vicino alla realtà, simulando il comportamento del robot UR5 e verificando la correttezza delle traiettorie pianificate e dei comandi inviati al robot.
+Su Polyscope abbiamo utilizzato il driver UR5 ROS2 di default, ma un differente controller, ovvero il \texttt{forward\_position\_controller}, che ci ha permesso di utilizzare lo stesso metodo precedente per la trasmissione della traiettoria pianificata, ovvero la pubblicazione dei riferimenti punto per punto ad una certa frequenza.
+
+\section{Test sul robot reale}
+Dopo il processo precedente, il sistema è stato testato sul robot reale e le traiettorie pianificate sono state eseguite con successo, dimostrando l'efficacia del sistema di controllo sviluppato sebbene il metodo di pubblicazione dei riferimenti punto per punto ad una certa frequenza, anche elevata, non sia stata ottimale e presentava dei leggeri scatti durante l'esecuzione della traiettoria.
+Motivo per il quale, è stato deciso di passare ad un differente controller ros2 che è quello di default del driver UR5, ovvero lo \texttt{scaled\_joint} e che utilizza un \textit{action server} e un \textit{action client} per la trasmissione della traiettoria pianificata, permettendo di inviare l'intera traiettoria in un'unica richiesta e ricevere una conferma di completamento al termine dell'esecuzione.
+
+\subsection{Scelta del controller: \texttt{scaled\_joint\_trajectory\_controller}}
+
+Il driver ROS~2 del robot UR mette a disposizione diversi controller. I due più rilevanti per questo lavoro sono il \texttt{forward\_position\_controller} e lo \texttt{scaled\_joint\_trajectory\_controller}.
+
+Il \texttt{forward\_position\_controller} è un controller di tipo \emph{forward command}: riceve su un topic un vettore di posizioni articolari e lo inoltra direttamente all'interfaccia hardware.
+Non esegue alcuna interpolazione, non applica limiti di velocità o accelerazione e non verifica il raggiungimento dell'obiettivo.
+Il profilo di moto dipende interamente dal nodo che pubblica i comandi, che deve quindi inviare un nuovo setpoint a frequenza costante e senza interruzioni.
+Un ritardo o un salto tra due setpoint successivi si traduce in un movimento brusco del robot.
+
+Lo \texttt{scaled\_joint\_trajectory\_controller} è invece un controller di traiettoria: riceve, tramite l'action \texttt{FollowJointTrajectory},
+una sequenza di punti (posizioni, velocità e istanti temporali) e si occupa di interpolarli e di eseguirli. Il termine \emph{scaled} indica che il tempo della traiettoria viene scalato in base al fattore di velocità
+impostato sul teach pendant del robot: se l'operatore riduce la velocità o interviene una sospensione di sicurezza, la traiettoria rallenta
+mantenendo la propria forma, senza accumulare errore di inseguimento.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{p{4cm}p{4.5cm}p{4.5cm}}
+        \toprule
+                              & \texttt{forward\_position} & \texttt{scaled\_joint\_trajectory} \\
+        \midrule
+        Ingresso              & singolo setpoint (topic)   & traiettoria completa (action)      \\
+        Interpolazione        & assente                    & presente                           \\
+        Temporizzazione       & a carico del nodo          & gestita dal controller             \\
+        Tolleranze e esito    & assenti                    & presenti (feedback e risultato)    \\
+        Annullamento          & non previsto               & previsto (cancellazione del goal)  \\
+        Scalatura di velocità & no                         & sì (teach pendant)                 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Confronto tra i due controller.}
+\end{table}
+
+Si è scelto lo \texttt{scaled\_joint\_trajectory\_controller} per tre motivi.
+In primo luogo, la traiettoria viene completamente calcolata \emph{offline}
+a partire dalla traiettoria cartesiana e inviata come un unico goal: il controller
+garantisce la temporizzazione, mentre con il \texttt{forward\_position\_controller}
+la regolarità del moto dipenderebbe dalla periodicità di un nodo Python
+non real-time. In secondo luogo, il controller fornisce feedback, verifica
+delle tolleranze e possibilità di annullare il movimento, utili per
+controllare l'esecuzione e fermare il robot in caso di anomalie. Infine, la
+scalatura del tempo rispetta i limiti e gli arresti di sicurezza imposti
+dal pendant, aspetto rilevante in un'applicazione in cui il robot opera
+in prossimità dell'operatore. Infine, grazie all'interpolazione interna, il controller garantisce un movimento più fluido e privo di scatti, migliorando la qualità complessiva dell'esecuzione della traiettoria pianificata.
+
+
+\subsection{Utilizzo del sistema}
+
+Anche in questo caso, il sistema si basa sull'utilizzo di due nodi principali: il nodo per la \texttt{home\_position} e il nodo per la pianificazione ed esecuzione della traiettoria.
+Prima di avviare questi nodi, c'è bisogno di avviare il driver del robot UR5, e la trasformazione statica tra la camera e il \texttt{wrist\_2\_link} per allineare correttamente le coordinate del sistema di riferimento della camera con quelle del robot tramite l'utilizzo di \textit{TF}.
+Una volta avviati questi componenti, il flusso di lavoro è simile a quello utilizzato in Unity, con la differenza che la pubblicazione ed esecuzione della traiettoria avviene tramite l'action server e l'action client del controller \texttt{scaled\_joint\_trajectory\_controller}, garantendo un'esecuzione più fluida e sicura della traiettoria pianificata.
+
+Si parte quindi con il nodo per la \texttt{home\_position}, che porta il robot in una posizione di partenza nota e sicura.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.75\linewidth]{figures/reale/home_postion_reale.jpeg}
+    \caption{Home\_position del robot reale UR5.}
+    \label{fig:home position del robot reale UR5}
+\end{figure}
+
+Successivamente si esegue lo script python per lo scatto della foto e l'inferenza del modello, che estrae i punti di interesse dalla foto scattata dalla camera.
+Infine, si prendono i punti estratti e si inseriscono all'interno del nodo per la pianificazione ed esecuzione della traiettoria (\texttt{spline\_separata\_finale}), che si occupa esattamente di:
+\begin{enumerate}
+    \item Convertire i punti estratti nel sistema di riferimento del robot tramite l'utilizzo di \textit{TF}.
+    \item Calcolare la traiettoria ottimale per il robot.
+    \item Convertire tutta la traiettoria nello spazio dei giunti tramite la cinematica inversa.
+    \item Inviare tutta la traiettoria una sola volta al controller tramite action.
+\end{enumerate}
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[height=0.75\linewidth]{figures/reale/polsino.png}
+%     \caption{Fondo maglia su eseprimento}
+%     \label{fig:polsino su esperimento}
+% \end{figure}
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[height=0.75\linewidth]{figures/reale/fondo_maglia.png}
+%     \caption{Fondo maglia su esperimento.}
+%     \label{fig:fondo maglia su esperimento}
+% \end{figure}
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[height=0.75\linewidth]{figures/reale/colletto_1.png}
+%     \caption{Inizio colletto su esperimento.}
+%     \label{fig:inizio colletto su esperimento}
+% \end{figure}
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[height=0.75\linewidth]{figures/reale/colletto_2.png}
+%     \caption{Fine colletto su esperimento.}
+%     \label{fig:fine colletto su esperimento}
+% \end{figure}
+\clearpage % Forza il testo precedente a chiudersi e manda le immagini alla pagina successiva
+
+\begin{figure}[p]
+    \centering
+    % Prima riga
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.42\textheight, width=\linewidth, keepaspectratio]{figures/reale/polsino.png}
+        \caption{Fondo maglia su esperimento.}
+        \label{fig:polsino su esperimento}
+    \end{minipage}\hfill
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.42\textheight, width=\linewidth, keepaspectratio]{figures/reale/fondo_maglia.png}
+        \caption{Fondo maglia su esperimento.}
+        \label{fig:fondo maglia su esperimento}
+    \end{minipage}
+
+    \vspace{0.5cm} % Spazio verticale tra le due righe
+
+    % Seconda riga
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.42\textheight, width=\linewidth, keepaspectratio]{figures/reale/colletto_1.png}
+        \caption{Colletto su esperimento.}
+        \label{fig:inizio colletto su esperimento}
+    \end{minipage}\hfill
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.42\textheight, width=\linewidth, keepaspectratio]{figures/reale/colletto_2.png}
+        \caption{Colletto su esperimento.}
+        \label{fig:fine colletto su esperimento}
+    \end{minipage}
+\end{figure}
+
+\section{Test su robot reale - Launcher automatico}
+Per semplificare ulteriormente l'utilizzo del sistema di controllo sul robot reale, è stato sviluppato un launcher automatico che avvia tutti i componenti necessari con un singolo comando.
+Questo launcher comprende l'avvio del nodo per la \texttt{home\_position}, lo scatto della foto, l'inferenza del modello e la pianificazione ed esecuzione della traiettoria per i punti estratti.
+In questo modo, l'operatore può avviare l'intero processo senza doversi preoccupare di avviare manualmente ogni nodo, ma soprattutto di non dover inserire manualmente le coordinate dei punti estratti.
+I nodi interessati sono esattamente gli stessi utilizzati in precedenza, per cui non è richiesta una particolare modifica di essi, se non l'aggiunta di topic per notificare il componente che ha il ruolo di successivo nella catena di esecuzione.
+In particolare, è stata implementata la notifica dell'avvenuto completamento di una fase tramite l'utilizzo di semplici topic dedicati:
+\begin{itemize}
+    \item Nodo per la \texttt{home\_position} $\longrightarrow$ nodo per lo scatto della foto e l'inferenza.
+    \item Nodo per lo scatto della foto e l'inferenza $\longrightarrow$ per la pianificazione e l'esecuzione della traiettoria.
+\end{itemize}

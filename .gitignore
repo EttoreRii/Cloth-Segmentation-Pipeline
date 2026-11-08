@@ -65,3 +65,21 @@ Thumbs.db
 /yolov8n-seg.pt
 /dataset_rgbd_maglioncino
 /testing_best
+
+
+# File temporanei LaTeX
+relazione/**/*.aux
+relazione/**/*.bbl
+relazione/**/*.blg
+relazione/**/*.synctex(busy)
+relazione/**/*.fdb_latexmk
+relazione/**/*.fls
+relazione/**/*.lof
+relazione/**/*.log
+relazione/**/*.lot
+relazione/**/*.out
+relazione/**/*.synctex.gz
+relazione/**/*.toc
+
+# PDF generato
+relazione/**/*.pdf
