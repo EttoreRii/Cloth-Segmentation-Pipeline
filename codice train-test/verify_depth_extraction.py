@@ -7,8 +7,8 @@ from geometry_utils import visualize_coordinates_3d
 def main():
     # 1. Setup paths
     # Usiamo un'immagine dal dataset rgbd
-    default_rgb = os.path.join(PROJECT_ROOT, "dataset_rgbd_maglioncino", "20260109_153911_938455_rgb.png")
-    default_depth = os.path.join(PROJECT_ROOT, "dataset_rgbd_maglioncino", "20260109_153911_938455_depth.png")
+    default_rgb = os.path.join(PROJECT_ROOT, "dataset_rgbd_maglioncino", "20260925_121440_623656_rgb.png")
+    default_depth = os.path.join(PROJECT_ROOT, "dataset_rgbd_maglioncino", "20260925_121440_623656_depth.png")
     
     if not (os.path.exists(default_rgb) and os.path.exists(default_depth)):
         dataset_dir = os.path.join(PROJECT_ROOT, "dataset_rgbd_maglioncino")

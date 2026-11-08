@@ -229,24 +229,24 @@ class KinematicController(Node):
         ]))"""
 
         #polsino_sx_raw = self.rete_to_base_tf(np.array([[-360.43, 214.64, 740.0], [-249.69, 219.28, 756.0]]))
-        polsino_sx_raw = self.rete_to_base_tf(np.array([[-409.07, 171.32, 921.0], [-284.72, 198.11, 909.0]]))
+        polsino_sx_raw = self.rete_to_base_tf(np.array([[-465.31, 187.34, 920.0], [-339.23, 203.21, 905.0]]))
         self.polsino_sx_fitto = self.prendi_punti_intermedi(polsino_sx_raw[0], polsino_sx_raw[1])
         #self.polsino_sx_fitto[:, 1] -= 0.09
         self.polsino_sx_fitto = self.costante_z(self.polsino_sx_fitto, usa_iqr=False)
 
         #polsino_dx_raw = self.rete_to_base_tf(np.array([[238.63, 246.57, 817.5], [363.9, 250.31, 848.5]]))
-        polsino_dx_raw = self.rete_to_base_tf(np.array([[332.86, 221.15, 889.0], [454.31, 217.7, 899.0]]))
+        polsino_dx_raw = self.rete_to_base_tf(np.array([[254.32, 216.99, 888.0], [378.4, 216.99, 888.0]]))
         self.polsino_dx_fitto = self.prendi_punti_intermedi(polsino_dx_raw[0], polsino_dx_raw[1])
         #self.polsino_dx_fitto[:, 1] -= 0.09
         self.polsino_dx_fitto = self.costante_z(self.polsino_dx_fitto, usa_iqr=False)
 
         self.fondo_maglia = self.rete_to_base_tf(np.array([
-            [-153.65, 209.32, 897.0],
-            [-112.18, 205.49, 889.0],
-            [7.19, 185.1, 894.5],
-            [47.09, 185.29, 886.0],
-            [164.52, 218.42, 878.0],
-            [205.52, 222.83, 884.0],
+            [-193.78, 196.14, 900.0],
+            [-151.0, 190.69, 893.0],
+            [-28.25, 177.32, 895.0],
+            [12.05, 181.23, 890.0],
+            [133.09, 205.58, 881.0],
+            [174.79, 210.65, 886.0],
         ]))
         #self.fondo_maglia[:, 1] -= 0.09
         self.fondo_maglia = self.costante_z(self.fondo_maglia, usa_iqr=False)
@@ -262,14 +262,14 @@ class KinematicController(Node):
             [105.74, -320.02, 891.5],
         ]))"""
         self.colletto = self.rete_to_base_tf(np.array([
-            [-67.15, -322.02, 1022.5],
-            [-17.3, -275.85, 1002.0],
-            [6.9, -251.76, 994.0],
-            [30.83, -244.2, 990.0],
-            [56.28, -245.93, 997.0],
-            [80.66, -246.67, 1000.0],
-            [104.97, -253.53, 1001.0],
-            [155.88, -302.37, 1017.0],
+            [-111.77, -329.89, 1019.0],
+            [-57.16, -275.56, 1005.0],
+            [-30.47, -259.88, 1000.0],
+            [-4.06, -257.42, 999.0],
+            [21.22, -257.42, 999.0],
+            [47.51, -258.0, 997.0],
+            [74.13, -277.77, 1001.0],
+            [128.26, -320.62, 1011.0],
         ]))
         #self.colletto[:, 1] -= 0.09
         self.colletto = self.costante_z(self.colletto, usa_iqr=False)
@@ -319,7 +319,7 @@ class KinematicController(Node):
             a_max_i = 0.002 if is_colletto else 0.005
 
             if i == 0 or i == 6:
-                v_max_i = 0.2#0.06
+                v_max_i = 0.25#0.06
                 a_max_i = 0.06#0.006
 
             if is_transition:
