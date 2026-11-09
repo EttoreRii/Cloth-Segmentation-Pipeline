@@ -17,7 +17,7 @@ Grazie alla sua versatilità, il metodo realizzato può essere applicato sia al 
 
 \section{Organizzazione geometrica del percorso}
 
-La funzione \texttt{genera\_traiettoria\_diversa()} organizza il percorso in otto segmenti consecutivi. Tale suddivisione permette di distinguere le operazioni di taglio vere e proprie dai movimenti necessari per passare da una regione della maglia alla successiva.
+La funzione che nel codice genera la traiettoria, organizza il percorso in otto segmenti consecutivi. Tale suddivisione permette di distinguere le operazioni di taglio vere e proprie dai movimenti necessari per passare da una regione della maglia alla successiva.
 
 Indicando con $\mathbf{P}_{\mathrm{start}}$ la posizione iniziale dell'organo terminale e con $\mathcal{P}_{\mathrm{sx}}$, $\mathcal{P}_{\mathrm{fondo}}$, $\mathcal{P}_{\mathrm{dx}}$ e $\mathcal{P}_{\mathrm{coll}}$ gli insiemi di punti relativi, rispettivamente, al polsino sinistro, al fondo, al polsino destro e al colletto, la sequenza è organizzata come segue:
 
@@ -297,7 +297,7 @@ quando la velocità media è sufficientemente diversa da zero.
 Il tempo cumulativo è quindi
 
 \begin{equation}
-    t_i=\sum_{j=1}^{i}\Delta t_j.
+    t_{tot}=\sum_{j=1}^{N}\Delta t_j.
 \end{equation}
 
 La relazione tra tempo e avanzamento viene poi interpolata per ottenere campioni temporali uniformi. Questo passaggio consente di descrivere la traiettoria attraverso una sequenza ordinata di posizioni e velocità.
@@ -329,6 +329,17 @@ Per il primo segmento di avvicinamento e per il raccordo che collega il punto fi
 \end{equation}
 
 La riduzione dei limiti cinematici sul colletto è coerente con la scelta di percorrere più lentamente un tratto che richiede maggiore attenzione geometrica. Si tratta, tuttavia, di una scelta progettuale e non di un limite fisico universale: i valori devono essere verificati sperimentalmente rispetto alla precisione richiesta, alla risposta del robot e all'interazione con il tessuto.
+
+La figura \ref{fig:andamento_velocita} mostra l'andamento della velocità lungo i vari segmenti della traiettoria di un caso di applicazione, evidenziando le differenze tra i tratti di taglio e i raccordi.
+Inoltre, è possibile notare come in alcuni tratti la velocità non raggiunge il valore massimo, a causa della lunghezza limitata del segmento e della necessità di rispettare i vincoli di accelerazione.
+Come discusso in precedenza, in quel caso il profilo di velocità diventa triangolare, con un tratto di accelerazione e uno di decelerazione senza fase a velocità costante.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{figures/conclusioni/Velocita.png}
+    \caption{Andamento velocità lungo i vari segmenti della traiettoria.}
+    \label{fig:andamento_velocita}
+\end{figure}
+
 
 \section{Calcolo della velocità cartesiana}
 
@@ -438,8 +449,6 @@ La matrice di orientamento desiderata è quindi
 
 Dal punto di vista geometrico, questa costruzione allinea il primo asse locale alla direzione di avanzamento e utilizza la verticale come riferimento per definire gli altri due assi. In questo modo l'orientamento varia in relazione alla forma della curva, anziché essere mantenuto arbitrariamente costante.
 
-Quando il prodotto vettoriale impiegato per calcolare $\mathbf{y}_e$ ha norma molto piccola, la direzione tangente è quasi parallela al vettore verticale di riferimento. In tale condizione la costruzione diventa numericamente mal condizionata; il codice prevede un vettore alternativo per evitare una divisione per una norma prossima a zero.
-
 \subsection{Transizioni tra orientamenti}
 
 Nei raccordi tra segmenti, l'orientamento iniziale e quello finale possono essere differenti. Per evitare una variazione improvvisa della posa, viene utilizzata l'interpolazione sferica dei quaternioni, nota come SLERP (\textit{Spherical Linear Interpolation}).
@@ -479,3 +488,17 @@ Per ogni istante campionato sono quindi disponibili:
 \end{itemize}
 
 La pianificazione produce così una descrizione cinematica completa del movimento nello spazio cartesiano. La traiettoria non specifica soltanto quali punti attraversare, ma anche come procedere lungo il percorso e come orientare l'organo terminale durante ciascun tratto.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{figures/conclusioni/Traiettoria.png}
+    \caption{Visualizzazione traiettoria lungo varie viste.}
+    \label{fig:andamento_traiettoria}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{figures/conclusioni/Orientazione.png}
+    \caption{Visualizzazione orientazione lungo la traiettoria.}
+    \label{fig:andamento_orientazione}
+\end{figure}

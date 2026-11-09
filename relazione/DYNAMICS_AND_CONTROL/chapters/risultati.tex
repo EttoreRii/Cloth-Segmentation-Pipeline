@@ -1,6 +1,6 @@
 \chapter{Risultati e Conclusioni}
 
-\section{Risultati ottenuti}
+\section{Risultati rete ottenuti}
 
 Il lavoro ha portato allo sviluppo di una pipeline completa per il taglio
 robotizzato di un indumento, dalla percezione all'esecuzione sul manipolatore
@@ -41,6 +41,9 @@ linea media delle cuciture, sufficiente per la generazione dei riferimenti.
     \label{fig:entrambe}
 \end{figure}
 
+%------------------------------------------------------------------
+\section{Analisi dell'inseguimento}
+
 Il modulo di pianificazione ha prodotto traiettorie cartesiane continue,
 suddivise in segmenti di taglio e raccordi, interpolate con spline cubiche e
 temporizzate con profili di velocità trapezoidali o triangolari. Le
@@ -48,7 +51,91 @@ posizioni, le velocità e gli orientamenti desiderati sono poi convertiti nello
 spazio dei giunti mediante cinematica inversa differenziale con
 Damped Least Squares.
 
-Un risultato rilevante è stato il passaggio dal \textit{forward position
+\subsection{Metodo}
+Durante l'esecuzione si registra la posizione reale del TCP, calcolata con 
+la stessa cinematica diretta usata in pianificazione a partire dai \texttt{/joint\_states},
+con il tempo preso dal timestamp del messaggio. La si
+confronta con la posizione desiderata $\mathbf p_d$ con due indici:
+\begin{align}
+e_t(t) &= \left\lVert \mathbf p_r(t) - \mathbf p_d(t)\right\rVert
+  &&\text{(errore temporale)},\\
+e_g(t) &= \min_{s}\left\lVert \mathbf p_r(t) - \mathbf p_d(s)\right\rVert
+  &&\text{(errore geometrico)}.
+\end{align}
+L’errore temporale dice quanto il robot è lontano da dove dovrebbe essere in quel momento,
+quello geometrico dice quanto è lontano dalla linea da seguire: per una cucitura, il secondo è quello che conta di più.
+ 
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{figures/conclusioni/Errore_finale.png}
+\caption{Posizione desiderata e reale lungo $x$, $y$, $z$ (colonna
+sinistra), errori temporale e geometrico (in alto a destra), percorso nel
+piano $xy$ (al centro a destra) ed errore temporale scomposto nei tre assi
+(in basso a destra). Le righe verticali tratteggiate indicano i confini
+dei tratti.}
+\label{fig:errore}
+\end{figure}
+ 
+\subsection{Risultati}
+\paragraph{Tratti regolari.}
+Per la maggior parte della traiettoria (Figura~\ref{fig:errore}) l'errore
+geometrico è molto basso: il robot rimane sul percorso.
+L’errore temporale, nullo nei tratti in cui il robot è fermo e crescente con la velocità,
+è compatibile con un ritardo di inseguimento dovuto alla dinamica del sistema di controllo dei giunti;
+tuttavia questa interpretazione resta da verificare.
+ 
+ 
+\paragraph{Tratto del colletto.}
+Tra circa 50 e 60~s il robot non segue la traiettoria: la $y$ reale si
+ferma a circa $-900$~mm mentre quella desiderata scende fino a circa
+$-935$~mm, con errore geometrico fino a circa 21~mm ed errore temporale fino
+a circa 38~mm, tutti lungo $y$. 
+Per verificare la conversione della traiettoria cartesiana desiderata in quella articolare,
+si prende la traiettoria articolare pianificata e si calcola, con la cinematica diretta \texttt{(fk)}, dove porterebbe il TCP.
+Si confronta poi con la traiettoria cartesiana desiderata; questo è l’errore di pianificazione.
+Il confronto tra traiettoria articolare pianificata e traiettoria cartesiana mostra che l'errore nasce già nel
+calcolo offline (Tabella~\ref{tab:pian}): è piccolo nei tratti 1--6 e si
+concentra nei tratti 7 e 8.
+ 
+\begin{table}[h]
+\centering
+\begin{tabular}{clcc}
+\toprule
+Tratto & Descrizione & Errore medio [mm] & Errore max [mm] \\
+\midrule
+1 & Avvicinamento      & 0.3  & 0.8  \\
+2 & Polsino sinistro   & 0.1  & 0.2  \\
+3 & Transizione        & 0.1  & 0.2  \\
+4 & Fondo maglia       & 0.1  & 0.1  \\
+5 & Transizione        & 0.5  & 1.8  \\
+6 & Polsino destro     & 0.1  & 0.1  \\
+7 & Transizione        & 8.5  & 53.3 \\
+8 & Colletto           & 14.1 & 53.3 \\
+\bottomrule
+\end{tabular}
+\caption{Errore tra traiettoria pianificata (cinematica diretta dei giunti
+calcolati) e traiettoria cartesiana desiderata, per tratto.}
+\label{tab:pian}
+\end{table}
+ 
+Si definisce \emph{raggio} la distanza orizzontale del TCP dall'asse
+verticale della base, $r=\sqrt{x^2+y^2}$ nel frame di base del robot. Il
+raggio massimo dei punti del colletto è di \textbf{975~mm}. Il raggio massimo raggiunto dalla traiettoria pianificata si ferma a
+922~mm, con il giunto \texttt{elbow} a $0^\circ$ (braccio completamente
+disteso). Questo indica che il punto del colletto più lontano ha $r = 975$ mm, cioè è richiesto fuori dalla zona raggiungibile
+e la differenza ($975-922 = 53$~mm) coincide con l'errore di pianificazione massimo.
+Si conclude che il colletto si trova oltre il raggio d'azione raggiungibile e che il robot
+passa per una configurazione singolare: non si tratta quindi di un limite del
+controller né di un problema di interpolazione, ma di un limite fisico della cinematica del robot.
+
+ 
+%------------------------------------------------------------------
+\section{Conclusioni e sviluppi futuri}
+È stata realizzata una pipeline completa, dall'immagine RGB-D
+all'esecuzione della traiettoria, con tre nodi ROS~2 indipendenti e
+comunicazione tramite topic con messaggi standard. L'inseguimento della
+traiettoria è accurato (errore geometrico molto basso) e l'analisi ha individuato nel raggio d'azione del robot il limite
+sul tratto del colletto. Un risultato rilevante è stato il passaggio dal \textit{forward position
     controller} allo \textit{scaled joint trajectory controller}. L'invio punto
 per punto dei riferimenti produceva leggeri scatti nel moto, mentre l'invio
 dell'intera traiettoria come singolo goal \textit{FollowJointTrajectory} ha
@@ -76,6 +163,8 @@ Il lavoro presenta alcune limitazioni che è opportuno evidenziare.
     \item \textbf{Pianificazione in anello aperto sulla percezione}: i punti
           vengono estratti una sola volta dalla posa di \textit{home}, quindi eventuali spostamenti o
           deformazioni del capo dopo l'acquisizione non vengono rilevati.
+    \item \textbf{Colletto fuori dal raggio d'azione}: il tratto del colletto supera il raggio massimo raggiungibile dal robot,
+            quindi la traiettoria pianificata non può seguire i punti desiderati.
 \end{itemize}
 
 \section{Sviluppi futuri}
@@ -91,6 +180,7 @@ Alla luce delle limitazioni emerse, i principali sviluppi possibili sono:
           \textit{hand-eye} della telecamera;
     \item introdurre un controllo in retroazione visiva o una riacquisizione
           periodica, per compensare spostamenti e deformazioni del tessuto;
+    \item riorganizzare il setup operativo per garantire che il colletto resti entro il raggio d'azione del robot evitando singolarità.
 \end{itemize}
 
 \section{Conclusioni}
