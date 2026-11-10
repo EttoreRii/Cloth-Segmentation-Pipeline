@@ -308,11 +308,11 @@ Una volta ottenute le maschere dalle predizioni del modello, viene applicato un 
 
 L'algoritmo segue i seguenti passaggi:
 \begin{enumerate}
-    \item \textbf{Filtraggio Maschere}: Se più istanze della stessa classe vengono rilevate, viene mantenuta solo quella con il punteggio di confidenza più elevato, applicando un filtraggio basato su Intersection over Union (IoU) per eliminare sovrapposizioni spurie.
+    \item \textbf{Filtraggio Maschere}: Nel caso in cui il modello generi più predizioni sovrapposte per la stessa istanza (prevenendo la frammentazione di un unico componente), viene applicato un criterio basato sull'Intersection over Union (IoU). Nello specifico, le maschere appartenenti alla stessa classe con un'alta sovrapposizione spaziale non vengono scartate, ma fuse per ricostruire l'intera geometria del componente, mentre le sovrapposizioni spurie a bassa confidenza vengono eliminate.
     \item \textbf{Y-Averaging (Calcolo Linea Media)}: Per ogni coordinata $x$ lungo la maschera, viene calcolata la media dei valori $y$ dei pixel appartenenti alla maschera. Questo permette di individuare la "linea centrale" dell'elemento (ad esempio, il centro della curva del colletto) ignorando lo spessore del bordo.
     \item \textbf{Campionamento Punti}:
           \begin{itemize}
-              \item Per il \textbf{Collar} e l' \textbf{Hem}, vengono estratti $N$ punti equidistanti lungo l'asse $x$ per rappresentare la curvatura della cucitura.
+              \item Per il \textbf{Collar} e l' \textbf{Hem}, vengono estratti $10$ punti equidistanti lungo l'asse $x$ per rappresentare la curvatura della cucitura.
               \item Per i \textbf{Cuff}, vengono estratti unicamente i punti estremi (inizio e fine) per definire l'orientamento del polsino.
           \end{itemize}
     \item \textbf{Proiezione 3D}: Per ogni punto $(x, y)$ estratto nell'immagine 2D, viene recuperato il valore di profondità $z$ dal frame depth sincronizzato. Sfruttando i parametri intrinseci della camera, le coordinate pixel vengono infine trasformate in coordinate tridimensionali nel sistema di riferimento del robot.

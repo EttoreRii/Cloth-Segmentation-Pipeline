@@ -6,18 +6,25 @@ Prima della sperimentazione sul robot reale è stato sviluppato un ambiente di s
 
 Il manipolatore utilizzato è un Universal Robots UR5, il cui modello è stato importato in Unity a partire dalla descrizione URDF (Unified Robot Description Format). L'importazione è stata effettuata mediante il pacchetto \textit{Unity Robotics Hub}, che consente di convertire automaticamente la struttura del robot in una gerarchia di oggetti Unity mantenendo la relazione cinematica tra i vari link.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{figures/unity/ur5.png}
+    \caption{Manipolatore Universal Robot UR5}
+    \label{fig:ur5}
+\end{figure}
+
 Durante l'importazione vengono creati automaticamente tutti i collegamenti tra i link del robot, rispettando la struttura descritta nel file URDF. Ogni giunto rotazionale viene convertito in un componente \textit{ArticulationBody}, introdotto da Unity per la simulazione fisica dei robot. Tale componente implementa un modello dinamico basato sul motore fisico PhysX e permette di simulare correttamente vincoli articolari, masse, inerzie e limiti meccanici.
 
 I giunti del robot risultano quindi organizzati secondo la stessa catena cinematica presente sul manipolatore reale:
 
 \begin{center}
-\texttt{base\_link} $\rightarrow$
-\texttt{shoulder\_link} $\rightarrow$
-\texttt{upper\_arm\_link} $\rightarrow$
-\texttt{forearm\_link} $\rightarrow$
-\texttt{wrist\_1\_link} $\rightarrow$
-\texttt{wrist\_2\_link} $\rightarrow$
-\texttt{wrist\_3\_link}.
+    \texttt{base\_link} $\rightarrow$
+    \texttt{shoulder\_link} $\rightarrow$
+    \texttt{upper\_arm\_link} $\rightarrow$
+    \texttt{forearm\_link} $\rightarrow$
+    \texttt{wrist\_1\_link} $\rightarrow$
+    \texttt{wrist\_2\_link} $\rightarrow$
+    \texttt{wrist\_3\_link}.
 \end{center}
 
 Ciò permette di utilizzare lo stesso modello cinematica impiegato nel sistema reale, garantendo una corrispondenza diretta tra simulazione ed esperimento.
