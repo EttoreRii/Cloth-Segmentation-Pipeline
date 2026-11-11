@@ -85,7 +85,7 @@ Una volta stabilita la comunicazione tra Unity e ROS~2 mediante il pacchetto \te
     \label{fig:home position}
 \end{figure}
 
-Raggiunta la posizione iniziale, viene acquisita un'immagine RGB del maglione mediante la telecamera simulata. L'immagine viene salvata all'interno della cartella \texttt{Assets} del progetto Unity e successivamente utilizzata come input per la rete neurale sviluppata per l'identificazione dei punti di interesse del capo. In particolare, il modello esegue un'inferenza sull'immagine acquisita ed estrae le coordinate dei punti appartenenti al colletto, ai due polsini e al fondo del maglione, che rappresentano i riferimenti necessari per la generazione della traiettoria di manipolazione.
+Raggiunta la posizione iniziale, viene acquisita un'immagine RGB del maglione mediante la telecamera simulata grazie ad un codice C\# dedicato, che viene lanciato digitato la lettera $S$. L'immagine viene salvata all'interno della cartella \texttt{Assets} del progetto Unity e successivamente utilizzata come input per la rete neurale sviluppata per l'identificazione dei punti di interesse del capo. In particolare, il modello esegue un'inferenza sull'immagine acquisita ed estrae le coordinate dei punti appartenenti al colletto, ai due polsini e al fondo del maglione, che rappresentano i riferimenti necessari per la generazione della traiettoria di manipolazione.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\linewidth]{figures/unity/yolo_inference_unity_result.jpg}

@@ -304,7 +304,7 @@ La relazione tra tempo e avanzamento viene poi interpolata per ottenere campioni
 
 \subsection{Parametri cinematici dei segmenti}
 
-Nel codice vengono utilizzati limiti differenti in funzione del tipo di tratto. Per i segmenti ordinari di taglio e per i raccordi non trattati come casi speciali, i valori di riferimento sono
+Nel codice vengono utilizzati limiti differenti in funzione del tipo di tratto. Per i segmenti ordinari di taglio e per i raccordi non trattati come casi speciali (equazioni \eqref{caso speciale 1} e \eqref{caso speciale 2}), i valori di riferimento sono
 
 \begin{equation}
     v_{\max}=0.06\,\mathrm{m/s},
@@ -318,6 +318,7 @@ Per il segmento finale relativo al colletto vengono utilizzati valori inferiori:
     v_{\max}=0.03\,\mathrm{m/s},
     \qquad
     a_{\max}=0.002\,\mathrm{m/s^2}.
+    \label{caso speciale 1}
 \end{equation}
 
 Per il primo segmento di avvicinamento e per il raccordo che collega il punto finale del polsino destro con il punto inziale del colletto, vengono invece assegnati valori più elevati:
@@ -326,6 +327,7 @@ Per il primo segmento di avvicinamento e per il raccordo che collega il punto fi
     v_{\max}=0.2\,\mathrm{m/s},
     \qquad
     a_{\max}=0.06\,\mathrm{m/s^2}.
+    \label{caso speciale 2}
 \end{equation}
 
 La riduzione dei limiti cinematici sul colletto è coerente con la scelta di percorrere più lentamente un tratto che richiede maggiore attenzione geometrica. Si tratta, tuttavia, di una scelta progettuale e non di un limite fisico universale: i valori devono essere verificati sperimentalmente rispetto alla precisione richiesta, alla risposta del robot e all'interazione con il tessuto.
