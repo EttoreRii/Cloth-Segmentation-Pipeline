@@ -128,23 +128,6 @@ Si conclude che il colletto si trova oltre il raggio d'azione raggiungibile e ch
 passa per una configurazione singolare: non si tratta quindi di un limite del
 controller né di un problema di interpolazione, ma di un limite fisico della cinematica del robot.
 
- 
-%------------------------------------------------------------------
-\section{Conclusioni e sviluppi futuri}
-È stata realizzata una pipeline completa, dall'immagine RGB-D
-all'esecuzione della traiettoria, con tre nodi ROS~2 indipendenti e
-comunicazione tramite topic con messaggi standard. L'inseguimento della
-traiettoria è accurato (errore geometrico molto basso) e l'analisi ha individuato nel raggio d'azione del robot il limite
-sul tratto del colletto. Un risultato rilevante è stato il passaggio dal \textit{forward position
-    controller} allo \textit{scaled joint trajectory controller}. L'invio punto
-per punto dei riferimenti produceva leggeri scatti nel moto, mentre l'invio
-dell'intera traiettoria come singolo goal \textit{FollowJointTrajectory} ha
-reso l'esecuzione più fluida, delegando la temporizzazione al controller e
-fornendo feedback, controllo delle tolleranze e scalatura rispetto ai limiti
-imposti dal pendant. Infine, il launcher automatico ha eliminato
-l'inserimento manuale delle coordinate, rendendo il ciclo completo
-(home position, acquisizione, inferenza, esecuzione) avviabile con un unico
-comando.
 
 % TODO: inserire qui i risultati sperimentali effettivamente misurati
 % (numero di prove, tasso di successo, errore di inseguimento, tempi).
@@ -185,14 +168,30 @@ Alla luce delle limitazioni emerse, i principali sviluppi possibili sono:
 
 \section{Conclusioni}
 
-Il progetto ha dimostrato la fattibilità di un approccio \textit{vision-guided}
-per il taglio robotizzato di tessuti deformabili, integrando
-segmentazione di istanze, ricostruzione 3D, pianificazione di traiettoria
-e controllo di un manipolatore UR5 in un'architettura modulare basata su
-ROS~2. L'uso di un ambiente di simulazione ha consentito di
-validare in anticipo il modello cinematico, le trasformazioni tra i sistemi di
-riferimento e la comunicazione tra i moduli, riducendo i tempi e i rischi
-della sperimentazione sul robot reale. Le principali criticità, legate
-all'incertezza percettiva, alla deformabilità del materiale e alla
-precisione del controllo, restano aperte e indicano le direzioni di
-approfondimento per sviluppi futuri.
+È stata realizzata una pipeline completa, dall'immagine RGB-D
+all'esecuzione della traiettoria, con tre nodi ROS~2 indipendenti e
+comunicazione tramite topic con messaggi standard. Il launch file
+automatico ha eliminato l'inserimento manuale delle coordinate, rendendo
+il ciclo completo (posizione di home, acquisizione, inferenza, esecuzione)
+avviabile con un unico comando.
+
+Un risultato rilevante è stato il passaggio dal \textit{forward position
+controller} allo \textit{scaled joint trajectory controller}: l'invio punto
+per punto dei riferimenti produceva leggeri scatti nel moto, mentre l'invio
+dell'intera traiettoria come singolo goal \textit{FollowJointTrajectory} ha
+reso l'esecuzione più fluida, delegando la temporizzazione al controller e
+fornendo feedback, controllo delle tolleranze e scalatura rispetto ai limiti
+imposti dal pendant. L'inseguimento della traiettoria è accurato (errore
+geometrico molto basso) e l'analisi ha individuato nel raggio d'azione del
+robot il limite sul tratto del colletto.
+
+Il progetto ha dimostrato la fattibilità di un approccio
+\textit{vision-guided} per il il taglio robotizzato di tessuti deformabili, integrando segmentazione di istanze, ricostruzione 3D,
+pianificazione di traiettoria e controllo di un manipolatore UR5 in
+un'architettura modulare basata su ROS~2. L'uso di un ambiente di
+simulazione ha consentito di validare in anticipo il modello cinematico, le
+trasformazioni tra i sistemi di riferimento e la comunicazione tra i
+moduli, riducendo i tempi e i rischi della sperimentazione sul robot
+reale. Le principali criticità, legate all'incertezza percettiva, alla
+deformabilità del materiale e alla precisione del controllo, restano
+aperte e indicano le direzioni di approfondimento per sviluppi futuri.
