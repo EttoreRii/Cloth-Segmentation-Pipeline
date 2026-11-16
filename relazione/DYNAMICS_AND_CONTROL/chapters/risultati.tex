@@ -127,8 +127,17 @@ e la differenza ($975-922 = 53$~mm) coincide con l'errore di pianificazione mass
 Si conclude che il colletto si trova oltre il raggio d'azione raggiungibile e che il robot
 passa per una configurazione singolare: non si tratta quindi di un limite del
 controller né di un problema di interpolazione, ma di un limite fisico della cinematica del robot.
+\newline
+Inoltre, a sostegno della tesi che l'errore sia dovuto al raggio d'azione, si osserva che la UniversalRobots ha indicato nelle specifiche del robot 
+un raggio massimo di 850~mm, che corrisponde a una distanza orizzontale dal centro della base, mentre il raggio massimo raggiunto dalla traiettoria pianificata è di 922~mm, quindi oltre il limite indicato dal costruttore.
 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{figures/conclusioni/limitazione.png}
+    \caption{Scheda tecnica ufficiale UR5: raggio massimo 850~mm}
+    \label{fig:limitazione}
+\end{figure}
 % TODO: inserire qui i risultati sperimentali effettivamente misurati
 % (numero di prove, tasso di successo, errore di inseguimento, tempi).
 % I valori attualmente presenti (20 maglioncini, 85\%, 20 ms, 1.2 s)

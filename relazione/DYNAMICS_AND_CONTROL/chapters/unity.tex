@@ -76,7 +76,16 @@ L'utilizzo dell'ambiente virtuale ha consentito di individuare e correggere nume
 
 \section{Esecuzione del sistema}
 
-Una volta stabilita la comunicazione tra Unity e ROS~2 mediante il pacchetto \textit{ROS-TCP-Connector}, viene avviata la sequenza operativa del sistema. Il primo nodo eseguito è \textit{home\_joint.py}, il cui compito è portare il manipolatore nella configurazione di \textit{home} precedentemente definita. Tale configurazione è stata scelta in modo da garantire che la telecamera montata sul robot inquadri completamente il maglione, assicurando condizioni di acquisizione ripetibili e una corretta visibilità delle principali caratteristiche del capo.
+Una volta stabilita la comunicazione tra Unity e ROS~2, mediante il pacchetto \textit{ROS-TCP-Connector} e configurando correttamente l'IP della macchina con la quale scambierà i messaggi sui topic ROS, viene avviata la sequenza operativa del sistema.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{figures/unity/ros_setting.png}
+    \caption{ROS-TCP-Connector settings}
+    \label{fig:ros_tcp_connector_settings}
+\end{figure}
+
+Il primo nodo eseguito è \textit{home\_joint.py}, il cui compito è portare il manipolatore nella configurazione di \textit{home} precedentemente definita. Tale configurazione è stata scelta in modo da garantire che la telecamera montata sul robot inquadri completamente il maglione, assicurando condizioni di acquisizione ripetibili e una corretta visibilità delle principali caratteristiche del capo.
 
 \begin{figure}[H]
     \centering

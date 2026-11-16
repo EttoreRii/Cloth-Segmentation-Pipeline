@@ -192,7 +192,11 @@ Ogni coordinata è interpolata mediante una funzione polinomiale cubica definita
 
 \section{Lunghezza della curva e parametro di avanzamento}
 
-Il parametro $u$ descrive la geometria della spline, ma non rappresenta direttamente la distanza percorsa. Infatti, incrementi uguali di $u$ non corrispondono necessariamente a incrementi uguali di lunghezza lungo una curva.
+Il parametro $u$ descrive la geometria della spline, ma non rappresenta direttamente la distanza percorsa.
+Infatti, incrementi uguali di $u$ non corrispondono necessariamente a incrementi uguali di lunghezza lungo una curva.
+Il parametro $u$ è la lunghezza di corda (poligonale) normalizzata: la somma delle
+distanze tra punti consecutivi, divisa per il totale. Non coincide con la
+lunghezza d'arco della spline.
 
 Per associare al percorso una coordinata spaziale fisica, si considera la lunghezza d'arco. La lunghezza totale della spline è approssimata numericamente campionando la curva in un elevato numero di punti e sommando le distanze euclidee tra campioni consecutivi:
 
@@ -204,7 +208,11 @@ Per associare al percorso una coordinata spaziale fisica, si considera la lunghe
 
 dove $N_s$ è il numero di campioni impiegati per l'approssimazione.
 
-Questa grandezza, espressa in metri, rappresenta la distanza effettiva lungo la curva interpolata e costituisce il riferimento per la pianificazione della velocità.
+Questa grandezza, espressa in metri, rappresenta la distanza effettiva lungo la curva interpolata.
+Tra due punti la spline segue una curva più lunga del segmento rettilineo che li unisce, quindi $L$ risulta
+maggiore della lunghezza della poligonale. Per questo la
+lunghezza $L$ viene ricalcolata campionando la curva interpolata, e costituisce il riferimento per la pianificazione della velocità, mentre $u$ serve solo
+come parametro della spline.
 
 Introducendo una coordinata di avanzamento $s(t)$, con
 
