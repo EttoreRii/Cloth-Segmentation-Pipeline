@@ -78,13 +78,24 @@ quello geometrico dice quanto è lontano dalla linea da seguire: per una cucitur
 
 \subsection{Risultati}
 \paragraph{Tratti regolari.}
-Per la maggior parte della traiettoria (Figura~\ref{fig:errore}) l'errore
-geometrico è molto basso: il robot rimane sul percorso.
-L’errore temporale, nullo nei tratti in cui il robot è fermo e crescente con la velocità,
-è compatibile con un ritardo di inseguimento dovuto alla dinamica del sistema di controllo dei giunti;
-tuttavia questa interpretazione resta da verificare.
-% Per la maggior parte della traiettoria (Figura~\ref{fig:errore}) l’errore geometrico è molto basso: il robot rimane sul percorso. L’errore temporale, nullo nei tratti in cui il robot è fermo e crescente con la velocità, risulta compatibile con un ritardo di inseguimento dovuto alla dinamica del sistema di controllo dei giunti. Tale interpretazione è confermata dal fatto che il valore massimo dell'errore geometrico risulta trascurabile e compatibile con le tolleranze meccaniche e di posizionamento del manipolatore UR5 (caratterizzato da una ripetibilità nominale di $\pm 0.1\text{ mm}$ da datasheet e da un'accuratezza assoluta di traiettoria nell'ordine del millimetro): di conseguenza, lo scostamento osservato è imputabile esclusivamente a un ritardo temporale di inseguimento e non a un errore geometrico sul percorso.
+Per la maggior parte della traiettoria (Figura~\ref{fig:err_geom}) l’errore geometrico è molto basso: il robot rimane sul percorso.
+L’errore temporale, nullo nei tratti in cui il robot è fermo e crescente con la velocità, risulta compatibile con un ritardo di inseguimento dovuto alla dinamica del sistema di controllo dei giunti.
+Un altro possibile fattore dell'errore temporale è legato ai \texttt{timestamp} dei messaggi ros con le informazioni relative ai giunti che potrebbero non coincidere con gli istanti reali delle operaizoni effettuate.
+Tale interpretazione è confermata dal fatto che il valore massimo dell'errore geometrico risulta trascurabile e compatibile con le tolleranze meccaniche e di posizionamento del manipolatore UR5 (caratterizzato da una ripetibilità nominale di $\pm 0.1\text{ mm}$ da datasheet e da un'accuratezza assoluta di traiettoria nell'ordine del millimetro): di conseguenza, lo scostamento osservato è imputabile esclusivamente a un ritardo temporale di inseguimento e non a un errore geometrico sul percorso.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{figures/conclusioni/Errore_geometrico.png}
+    \caption{Errore geometrico nel tempo}
+    \label{fig:err_geom}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{figures/conclusioni/Errore_geometrico_zoomato.png}
+    \caption{Errore geometrico zoomato nel tempo}
+    \label{fig:err_geom_zoom}
+\end{figure}
 
 \paragraph{Tratto del colletto.}
 Tra circa 50 e 60~s il robot non segue la traiettoria: la $y$ reale si
