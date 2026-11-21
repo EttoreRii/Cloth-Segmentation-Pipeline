@@ -2,6 +2,7 @@
 \label{chap:architettura_ros2}
 
 Di seguito viene descritta l'architettura del sistema di controllo implementato in ROS~2, evidenziando i principali nodi e le loro interazioni. L'architettura è stata progettata per garantire modularità, scalabilità e facilità di integrazione sia con il sistema di simulazione in Unity che con il robot reale.
+\textbf{Nota:} La camera Intel RealSense D435i non è inclusa nello schema dell'architettura ROS~2 in quanto è stata interfacciata direttamente tramite le librerie Python dedicate, anziché mediante un'integrazione ROS~2.
 
 \section{Architettura per Unity}
 
@@ -13,6 +14,7 @@ L'architettura del sistema di simulazione in Unity è composta da diversi compon
     \caption{Architettura ROS~2 per Unity}
     \label{fig:architettura_ros2_per_unity}
 \end{figure}
+
 
 \newpage
 \section{Architettura per il robot reale}
