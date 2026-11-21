@@ -26,8 +26,10 @@ setup(
         'console_scripts': [
             "home_joint_final = coordinate_converter.home_joint_final:main",
             "home_joint_trajectory = coordinate_converter.home_joint_trajectory:main",
+            "home_joint_final_launcher = coordinate_converter.home_joint_final_launcher:main",
             "spline_separata = coordinate_converter.spline_separata:main",
-            "spline_separata_finale = coordinate_converter.spline_separata_finale:main"
+            "spline_separata_finale = coordinate_converter.spline_separata_finale:main",
+            "spline_separata_finale_launcher = coordinate_converter.spline_separata_finale_launcher:main"
         ],
     },
 )

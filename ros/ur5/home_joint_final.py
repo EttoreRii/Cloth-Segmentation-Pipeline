@@ -299,7 +299,7 @@ class HomeJointController(Node):
         self.d     = [0.089159, 0,        0,        0.10915, 0.09465, 0.0823 ]
 
         self.trajectory = []
-        self.dt = 0.025
+        self.dt = 0.01
 
         self.joint_names = [
             'shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
