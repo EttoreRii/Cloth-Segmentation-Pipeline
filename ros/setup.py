@@ -29,7 +29,8 @@ setup(
             "home_joint_final_launcher = coordinate_converter.home_joint_final_launcher:main",
             "spline_separata = coordinate_converter.spline_separata:main",
             "spline_separata_finale = coordinate_converter.spline_separata_finale:main",
-            "spline_separata_finale_launcher = coordinate_converter.spline_separata_finale_launcher:main"
+            "spline_separata_finale_launcher = coordinate_converter.spline_separata_finale_launcher:main",
+            "vision_node = coordinate_converter.vision_node:main"
         ],
     },
 )
