@@ -210,28 +210,15 @@ ros2 run coordinate_converter spline_separata_finale
 I punti calcolati dalla visione non passano ai nodi ROS automaticamente: vanno copiati nel nodo. Lo script `verify_depth_extraction.py` (o `test_unity_inference.py` per Unity) stampa a console le definizioni NumPy già pronte:
 
 ```python
-polsino_sx_raw = self.rete_to_base(np.array([[-0.158, 0.082, 0.725], [-0.121, 0.086, 0.724]]))
+polsino_sx_raw = self.rete_to_base_tf(np.array([[-0.158, 0.082, 0.725], [-0.121, 0.086, 0.724]]))
 self.polsino_sx_fitto = self.prendi_punti_intermedi(polsino_sx_raw[0], polsino_sx_raw[1])
-self.fondo_maglia = self.rete_to_base(np.array([...]))
-self.colletto = self.rete_to_base(np.array([...]))
+self.fondo_maglia = self.rete_to_base_tf(np.array([...]))
+self.colletto = self.rete_to_base_tf(np.array([...]))
 ```
 
 Incollale in `spline_separata.py` (Unity) o `spline_separata_finale.py` (UR5), ricompila con `colcon build` e lancia il nodo. `rete_to_base` converte i punti dal frame della camera al frame base del robot.
 
 **Flusso completo:** acquisizione/Unity → `verify_depth_extraction.py` → copia degli array nel nodo → `home_*` → `spline_separata*`.
-
----
-
-## Risultati
-
-Validation set, 30 epoche:
-
-| Metrica | Precision | Recall | mAP@50 |
-| :--- | :---: | :---: | :---: |
-| Box | 85.4% | 85.0% | **90.3%** |
-| Mask | 65.4% | 60.7% | **56.8%** |
-
-Il mAP delle maschere è limitato dalla deformabilità del tessuto, ma l'Y-averaging estrae comunque una linea centrale stabile, sufficiente per la generazione delle traiettorie. Curve e matrici di confusione sono in `risultati train-val/yolo_run/`.
 
 ---
 
