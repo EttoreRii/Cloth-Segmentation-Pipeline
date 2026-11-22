@@ -416,15 +416,27 @@ purché la derivata della curva non sia nulla.
 
 Oltre alla posizione, è necessario definire l'orientamento dell'organo terminale durante il movimento. Tale orientamento determina la direzione degli assi locali dell'utensile e contribuisce a stabilire come esso si presenta rispetto alla superficie della maglia.
 
-Per i segmenti senza un orientamento imposto, il codice costruisce una terna cartesiana a partire dalla direzione tangente al percorso. Per ogni punto campionato, la direzione tangente viene utilizzata come asse locale $x_e$:
+Per i segmenti senza un orientamento imposto, il codice costruisce una terna cartesiana a partire dalla direzione tangente al percorso.
+%Per ogni punto campionato, la direzione tangente viene utilizzata come asse locale $x_e$:
 
+%\begin{equation}
+%    \mathbf{x}_e=
+%    \frac{\mathbf{r}'(u)}
+%    {\|\mathbf{r}'(u)\|}.
+%\end{equation}
+
+Dati i punti campionati $\mathbf{p}_k$, $k=0,\ldots,n-1$, della traiettoria cartesiana, la direzione tangente è stimata con la differenza finita in
+avanti
 \begin{equation}
-    \mathbf{x}_e=
-    \frac{\mathbf{r}'(u)}
-    {\|\mathbf{r}'(u)\|}.
+    \mathbf{x}_{e,k}=
+    \frac{\mathbf{p}_{k+1}-\mathbf{p}_k}
+    {\left\|\mathbf{p}_{k+1}-\mathbf{p}_k\right\|}
 \end{equation}
+Per $\Delta u\to 0$ questa
+direzione coincide con $\mathbf{r}'(u)/\lVert\mathbf{r}'(u)\rVert$, cioè
+con la direzione della velocità di riferimento.
 
-Viene quindi introdotto un vettore di riferimento verticale
+Viene poi introdotto un vettore di riferimento verticale
 
 \begin{equation}
     \mathbf{z}_{\mathrm{ref}}=
