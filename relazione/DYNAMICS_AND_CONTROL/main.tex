@@ -233,13 +233,13 @@ I poligoni sono stati successivamente convertiti nel formato richiesto da Ultral
 
 La scelta del modello è ricaduta su \textbf{YOLOv8-seg Nano (YOLOv8n-seg)}, la versione più leggera e veloce della famiglia Ultralytics YOLOv8 dedicata alla segmentazione delle istanze.
 
-Questa scelta è motivata dalla necessità di operare in tempo reale su hardware embedded, come la Jetson Orin Nano, dove le risorse computazionali e la memoria sono limitate. Nonostante le dimensioni ridotte, l'architettura YOLOv8n-seg garantisce un ottimo compromesso tra velocità (FPS) e accuratezza (mAP).
+Questa scelta è motivata dalla necessità di operare in tempo reale su hardware embedded, dove le risorse computazionali e la memoria sono limitate. Nonostante le dimensioni ridotte, l'architettura YOLOv8n-seg garantisce un ottimo compromesso tra velocità e accuratezza.
 
 Caratteristiche principali dell'architettura:
 \begin{itemize}
     \item \textbf{Backbone}: Una versione ottimizzata di CSPDarknet53 per l'estrazione delle feature.
     \item \textbf{Neck}: Utilizzo di PANet (Path Aggregation Network) per migliorare la fusione delle feature a diverse scale.
-    \item \textbf{Head}: Decoupled Head per la classificazione e la regressione dei box, integrata con un ramo dedicato alla generazione delle maschere di segmentazione tramite prototipi.
+    \item \textbf{Head}: Decoupled Head per la classificazione e la regressione dei box.
 \end{itemize}
 
 L'addestramento è stato eseguito per 30 epoche con una dimensione delle immagini di entry a 640x640 pixel, utilizzando l'ottimizzatore SGD e una funzione di loss che combina box loss, class loss e mask loss. Successivamente sono riportate immagini relative alla validazione di alcuni batch di immagini.
